@@ -1,0 +1,6 @@
+# TODOs
+Might replace tanh function with heaviside or step function
+
+
+# Notes
+Simply choosing the best individual during selection can get a fitness of 0.13

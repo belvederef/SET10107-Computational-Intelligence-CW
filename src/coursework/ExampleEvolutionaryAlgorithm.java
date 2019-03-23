@@ -1,6 +1,10 @@
 package coursework;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import model.Fitness;
 import model.Individual;
@@ -14,8 +18,6 @@ import model.NeuralNetwork;
  * 
  */
 public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
-	
-
 	/**
 	 * The Main Evolutionary Loop
 	 */
@@ -41,9 +43,9 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			 * 
 			 */
 
-			// Select 2 Individuals from the current population. Currently returns random Individual
-			Individual parent1 = select(); 
-			Individual parent2 = select();
+			// Select 2 Individuals from the current population
+			Individual parent1 = tournamentSelect(); 
+			Individual parent2 = tournamentSelect();
 
 			// Generate a child by crossover. Not Implemented			
 			ArrayList<Individual> children = reproduce(parent1, parent2);			
@@ -88,7 +90,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 * 
 	 */
 	private Individual getBest() {
-		best = null;;
+		best = null;
 		for (Individual individual : population) {
 			if (best == null) {
 				best = individual.copy();
@@ -115,15 +117,36 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 
 	/**
-	 * Selection --
+	 * Selection
 	 * 
 	 * NEEDS REPLACED with proper selection this just returns a copy of a random
 	 * member of the population
+	 * To select a parent:
 	 */
-	private Individual select() {		
+	private Individual select() {
 		Individual parent = population.get(Parameters.random.nextInt(Parameters.popSize));
 		return parent.copy();
 	}
+	
+	private Individual tournamentSelect() {
+		/**
+		 * Elitism - copy the best chromosome (or a few best chromosomes) to new population
+		 * 1 - Pick t solutions completely at random from the population
+		 * 2 - Select the best of the t solutions to be a parent
+		 */
+		Collections.shuffle(population);
+		Individual parent = population
+				.stream()
+				.limit(10)
+				.sorted((c1, c2) -> c1.compareTo(c2))
+				.findFirst()
+				.orElse(null);
+		return parent;
+	}
+	
+	
+	
+	
 
 	/**
 	 * Crossover / Reproduction
@@ -137,6 +160,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		children.add(parent2.copy());		
 		return children;
 	} 
+//	onept_crossover
+//	twopt_crossover
+//	uniform_crossover
+	
 	
 	/**
 	 * Mutation
