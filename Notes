@@ -4,6 +4,7 @@
 - Could try Seeding the Population for faster evolution although pop might converge prematurely
 - Check immigration
 
+- mutate only alleles that are not known to improve (e.g. tweak ones for fuel)
 
 ### Notes
 Simply choosing the best individual during selection can get a fitness of 0.13

@@ -37,10 +37,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 			// Generate a child by crossover
 			
-			ArrayList<Individual> children = uniformCrossover(parent1, parent2);
+//			ArrayList<Individual> children = uniformCrossover(parent1, parent2);
 //			ArrayList<Individual> children = onePointCrossover(parent1, parent2);	
 //			ArrayList<Individual> children = twoPointCrossover(parent1, parent2);
-//			ArrayList<Individual> children = arithmeticCrossover(parent1, parent2);
+			ArrayList<Individual> children = arithmeticCrossover(parent1, parent2);
 			
 			
 			//mutate the offspring
@@ -50,6 +50,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			evaluateIndividuals(children);			
 
 			// Replace children in population
+//			replace(children);
 			tournamentReplace(children);
 
 			// check to see if the best has improved
@@ -126,10 +127,12 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		 * 1 - Pick t solutions completely at random from the population
 		 * 2 - Select the best of the t solutions to be a parent
 		 */
+		final int TOURNAMET_SIZE = 20;
+		
 		Collections.shuffle(population);
 		Individual parent = population
 				.stream()
-				.limit(5)
+				.limit(TOURNAMET_SIZE)
 				.sorted((c1, c2) -> c1.compareTo(c2))
 				.findFirst()
 				.orElse(null);
@@ -280,17 +283,23 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			population.set(idx, individual);
 		}		
 	}
+	// Replace using tournament - same as selection but with worst
 	private void tournamentReplace(ArrayList<Individual> individuals) {
-		Collections.shuffle(population);
-		population
-			.stream()
-			.limit(10)
-			.sorted((c1, c2) -> c2.compareTo(c1))
-			.skip(1)
-			.collect(Collectors.toList());
-//		collect(Collectors.toCollection(ArrayList::new));
+		final int TOURNAMET_SIZE = 20;
+		
+		for (Individual individual : individuals) {
+			Collections.shuffle(population);
+			Individual worstChrom = population
+				.stream()
+				.limit(TOURNAMET_SIZE)
+				.sorted((c1, c2) -> c2.compareTo(c1))
+				.findFirst()
+				.orElse(null);
+
+			population.remove(worstChrom);
+			population.add(individual);
+		}
 	}
-//	Replace using tournament - same as selection but with worst
 
 	// Returns the index of the worst member of the population
 	private int getWorstIndex() {
