@@ -19,13 +19,13 @@ public class Parameters {
 	public static double maxGene = +3;
 		
 	public static int popSize = 30; // default: 40
-	public static int maxEvaluations = 4000; // max 20000
+	public static int maxEvaluations = 8000; // max 20000
 	
 	// Parameters for mutation 
 	// Rate = probability of changing a gene
 	// Change = the maximum +/- adjustment to the gene value
 	public static double mutateRate = 0.03; // .5 - def 0.01. Mutation rate for mutation operator
-	public static double mutateChange = 0.5; // .3 - def 0.05. Delta change for mutation operator
+	public static double mutateChange = 0.1; // .3 - def 0.05. Delta change for mutation operator
 	
 	//Random number generator used throughout the application
 	public static long seed = System.currentTimeMillis();

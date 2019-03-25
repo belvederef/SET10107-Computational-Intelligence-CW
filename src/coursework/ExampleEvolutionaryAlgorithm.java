@@ -2,8 +2,6 @@ package coursework;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.stream.Collectors;
-
 import model.Fitness;
 import model.Individual;
 import model.NeuralNetwork;
@@ -25,22 +23,20 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 		// main EA processing loop
 		while (evaluations < Parameters.maxEvaluations) {
-			/**
-			 * this is a skeleton EA - you need to add the methods.
-			 * You can also change the EA if you want 
-			 * You must set the best Individual at the end of a run
-			 */
-
 			// Select 2 Individuals from the current population
 			Individual parent1 = tournamentSelect(); 
 			Individual parent2 = tournamentSelect();
-
-			// Generate a child by crossover
+//			Individual parent1 = rouletteSelect(); 
+//			Individual parent2 = rouletteSelect();
+//			Individual parent1 = rankSelect(); 
+//			Individual parent2 = rankSelect();
 			
+			
+			// Generate a child by crossover
 //			ArrayList<Individual> children = uniformCrossover(parent1, parent2);
 //			ArrayList<Individual> children = onePointCrossover(parent1, parent2);	
-//			ArrayList<Individual> children = twoPointCrossover(parent1, parent2);
-			ArrayList<Individual> children = arithmeticCrossover(parent1, parent2);
+			ArrayList<Individual> children = twoPointCrossover(parent1, parent2);
+//			ArrayList<Individual> children = arithmeticCrossover(parent1, parent2);
 			
 			
 			//mutate the offspring
@@ -52,6 +48,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			// Replace children in population
 //			replace(children);
 			tournamentReplace(children);
+//			regeneratePopulation();
 
 			// check to see if the best has improved
 			best = getBest();
@@ -70,7 +67,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 	/**
 	 * Sets the fitness of the individuals passed as parameters (whole population)
-	 * 
 	 */
 	private void evaluateIndividuals(ArrayList<Individual> individuals) {
 		for (Individual individual : individuals) {
@@ -81,7 +77,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 	/**
 	 * Returns a copy of the best individual in the population
-	 * 
 	 */
 	private Individual getBest() {
 		best = null;
@@ -120,7 +115,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		Individual parent = population.get(Parameters.random.nextInt(Parameters.popSize));
 		return parent.copy();
 	}
-	
 	private Individual tournamentSelect() {
 		/**
 		 * Elitism - copy the best chromosome (or a few best chromosomes) to new population
@@ -138,27 +132,39 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 				.orElse(null);
 		return parent;
 	}
-//	Fitness proportionate
-//	public static Individual rouletteSelection(Individual[] population){
-//		//Get total fitness
-//		double totalFitness = 0;
-//		for(int i = 0; i < Parameters.popSize; ++i)
-//			totalFitness += 1.0d - population[i].error;
-//		
-//		//Get slice value
-//		double sliceValue = Math.abs(Parameters.random.nextDouble() * totalFitness);
-//		
-//		//Select individual
-//		for(int j = 0; j < Parameters.popSize; ++j){
-//			sliceValue -= 1.0d - Math.abs(population[j].error);
-//			if(sliceValue <= 0.0d)
-//				return population[j];
-//		}
-//		return population[Parameters.random.nextInt(Parameters.popSize)];
-//	}
+	// Fitness proportionate selection - roulette wheel selection
+	private Individual rouletteSelect() {
+		// calculate the total weight
+		double weightSum = population
+				.stream()
+				.mapToDouble(c -> 1 - c.fitness)
+				.sum();
+		
+		// Generate a random number between 0 and weightSum
+		double rand = weightSum * Parameters.random.nextDouble();
+		// Find random value based on weights
+		for(Individual indiv : population) {		
+			rand -= (1 - indiv.fitness);		
+			if(rand < 0) 
+				return indiv;
+		}
+		// When rounding errors occur, return the last item 
+		return population.get(-1);
+	}
 
-//	 Ranked Fitness proportionate
-	
+	// Ranked Fitness proportionate
+	private Individual rankSelect() {
+		population.sort((c1, c2) -> c2.compareTo(c1));
+		
+		int rand = Parameters.random.nextInt(Parameters.popSize);
+		for (int i = 0; i < Parameters.popSize; i++) {
+			rand--;
+			if (rand < i) {
+				return population.get(i);
+			}
+		}
+		return population.get(-1);
+	}
 	
 	
 	
@@ -300,6 +306,18 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			population.add(individual);
 		}
 	}
+	
+	public void regeneratePopulation() {
+		// NOT USED. Replace the worst individuals with randomly generated ones
+		population.sort((c1, c2) -> c2.compareTo(c1));
+		for (int i = 0; i < 15; ++i) {
+			//chromosome weights are initialised randomly in the constructor
+			Individual individual = new Individual();
+			population.remove(0);
+			population.add(individual);
+		}
+		evaluateIndividuals(population);
+	}
 
 	// Returns the index of the worst member of the population
 	private int getWorstIndex() {
@@ -316,7 +334,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 		}
 		return idx;
-	}	
+	}
+	
 
 	
 	
