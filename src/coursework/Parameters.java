@@ -22,7 +22,7 @@ public class Parameters {
 	public static double maxGene = +1;
 		
 	public static int popSize = 100; // default: 40
-	public static int maxEvaluations = 4000; // max 20000
+	public static int maxEvaluations = 20000; // max 20000
 	
 	public static SelectionType selectionType = SelectionType.TOURNAMENT;
 	public static CrossoverType crossoverType = CrossoverType.TWO_POINTS;
