@@ -1,6 +1,7 @@
 package coursework;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import model.Fitness;
 import model.Individual;
@@ -23,20 +24,50 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 		// main EA processing loop
 		while (evaluations < Parameters.maxEvaluations) {
+			
+			
 			// Select 2 Individuals from the current population
 			Individual parent1 = tournamentSelect(); 
 			Individual parent2 = tournamentSelect();
-//			Individual parent1 = rouletteSelect(); 
-//			Individual parent2 = rouletteSelect();
-//			Individual parent1 = rankSelect(); 
-//			Individual parent2 = rankSelect();
 			
-			
+			switch(Parameters.selectionType) {
+			case TOURNAMENT:
+			default:
+				parent1 = tournamentSelect(); 
+				parent2 = tournamentSelect();
+				break;
+			case ROULETTE:
+				parent1 = rouletteSelect(); 
+				parent2 = rouletteSelect();
+				break;
+			case RANK:
+				parent1 = rankSelect(); 
+				parent2 = rankSelect();
+				break;
+			case RANDOM:
+				parent1 = randSelect(); 
+				parent2 = randSelect();
+			}
+
+
 			// Generate a child by crossover
-//			ArrayList<Individual> children = uniformCrossover(parent1, parent2);
-//			ArrayList<Individual> children = onePointCrossover(parent1, parent2);	
-			ArrayList<Individual> children = twoPointCrossover(parent1, parent2);
-//			ArrayList<Individual> children = arithmeticCrossover(parent1, parent2);
+			ArrayList<Individual> children;
+			
+			switch(Parameters.crossoverType) {
+			case ARITHM:
+				children = arithmeticCrossover(parent1, parent2);
+				break;
+			case ONE_POINT:
+				children = onePointCrossover(parent1, parent2);
+				break;
+			case TWO_POINTS:
+			default:
+				children = twoPointCrossover(parent1, parent2);
+				break;
+			case UNIFORM:
+				children = uniformCrossover(parent1, parent2);
+				break;
+			}
 			
 			
 			//mutate the offspring
@@ -46,8 +77,16 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			evaluateIndividuals(children);			
 
 			// Replace children in population
-//			replace(children);
-			tournamentReplace(children);
+			switch(Parameters.replaceType) {
+			case REP_TOURNAMENT:
+			default:
+				tournamentReplace(children);
+				break;
+			case REP_WORST:
+				replaceWorst(children);
+				break;
+			}
+
 //			regeneratePopulation();
 
 			// check to see if the best has improved
@@ -92,12 +131,11 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 	/**
 	 * Generates a randomly initialised population
-	 * 
 	 */
 	private ArrayList<Individual> initialise() {
 		population = new ArrayList<>();
 		for (int i = 0; i < Parameters.popSize; ++i) {
-			//chromosome weights are initialised randomly in the constructor
+			// chromosome weights are initialised randomly in the constructor
 			Individual individual = new Individual();
 			population.add(individual);
 		}
@@ -111,7 +149,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	/**
 	 * SELECTION
 	 */
-	private Individual select() {
+	private Individual randSelect() {
 		Individual parent = population.get(Parameters.random.nextInt(Parameters.popSize));
 		return parent.copy();
 	}
@@ -172,12 +210,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	/**
 	 * CROSSOVER 
 	 */
-	private ArrayList<Individual> reproduce(Individual parent1, Individual parent2) {
-		ArrayList<Individual> children = new ArrayList<>();
-		children.add(parent1.copy());
-		children.add(parent2.copy());		
-		return children;
-	}
 	private ArrayList<Individual> uniformCrossover(Individual parent1, Individual parent2){
 		Individual child1 = new Individual();
 		Individual child2 = new Individual();
@@ -274,6 +306,49 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 		}		
 	}
+    private void mutateBoundaryMultiply(Individual[] children) {
+        int operation;
+        double chance;
+        for (Individual child : children) {
+            for (int i = 0; i < child.chromosome.length; ++i) {
+                chance = Parameters.random.nextDouble();
+                operation = Parameters.random.nextInt(2);
+                if (chance <= Parameters.mutateRate) {
+                    child.chromosome[i] = (operation < 1) ?
+                            child.chromosome[i] * -Parameters.mutateChange :
+                            child.chromosome[i] * Parameters.mutateChange;
+                }
+                checkChromosome(child);
+            }
+        }
+    }
+
+    private void mutateBoundaryAddition(Individual[] children) {
+        int operation;
+        double chance;
+        for (Individual child : children) {
+            for (int i = 0; i < child.chromosome.length; ++i) {
+                chance = Parameters.random.nextDouble();
+                operation = Parameters.random.nextInt(2);
+                if (chance <= Parameters.mutateRate) {
+                    child.chromosome[i] = (operation < 1) ?
+                            child.chromosome[i] - Parameters.mutateChange :
+                            child.chromosome[i] + Parameters.mutateChange;
+                }
+                checkChromosome(child);
+            }
+        }
+    }
+
+    private void checkChromosome(Individual child) {
+        for (Double gene : child.chromosome) {
+            if (gene < Parameters.minGene) {
+                gene = Parameters.minGene;
+            } else if (gene > Parameters.maxGene) {
+                gene = Parameters.maxGene;
+            }
+        }
+    }
 
 	
 	
@@ -283,7 +358,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	/**
 	 * REPLACEMENT
 	 */
-	private void replace(ArrayList<Individual> individuals) {
+	private void replaceWorst(ArrayList<Individual> individuals) {
 		for(Individual individual : individuals) {
 			int idx = getWorstIndex();		
 			population.set(idx, individual);
@@ -337,7 +412,18 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 	
 
-	
+    private void injectImmigrant(Individual[] population) {
+        Individual immigrant = new Individual();
+        evaluateIndividuals(new Individual[]{immigrant});
+        Arrays.sort(population);
+        population[population.length - 3] = immigrant;
+    }
+    
+    private void evaluateIndividuals(Individual[] individuals) {
+        for (Individual individual : individuals) {
+//            individual.fitness = meanSquaredError(Parameters.trainData, individual.chromosome);
+        }
+    }
 	
 	@Override
 	public double activationFunction(double x) {

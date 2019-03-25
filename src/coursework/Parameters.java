@@ -7,25 +7,32 @@ import model.NeuralNetwork;
 import model.LunarParameters.DataSet;
 
 public class Parameters {
- 
+	public enum SelectionType { RANDOM, TOURNAMENT, ROULETTE, RANK }
+	public enum CrossoverType { UNIFORM, ONE_POINT, TWO_POINTS, ARITHM }
+	public enum ReplaceType { REP_WORST, REP_TOURNAMENT }
 	/**
 	 * These parameter values can be changed 
 	 * You may add other Parameters as required to this class 
 	 * 
 	 */
-	private static int numHidden = 5;	
+	
+	private static int numHidden = 14;	
 	private static int numGenes = calculateNumGenes();
-	public static double minGene = -3; // specifies minimum and maximum weight values 
-	public static double maxGene = +3;
+	public static double minGene = -1; // specifies minimum and maximum weight values 
+	public static double maxGene = +1;
 		
-	public static int popSize = 30; // default: 40
-	public static int maxEvaluations = 8000; // max 20000
+	public static int popSize = 100; // default: 40
+	public static int maxEvaluations = 4000; // max 20000
+	
+	public static SelectionType selectionType = SelectionType.TOURNAMENT;
+	public static CrossoverType crossoverType = CrossoverType.TWO_POINTS;
+	public static ReplaceType replaceType = ReplaceType.REP_TOURNAMENT;
 	
 	// Parameters for mutation 
 	// Rate = probability of changing a gene
 	// Change = the maximum +/- adjustment to the gene value
-	public static double mutateRate = 0.03; // .5 - def 0.01. Mutation rate for mutation operator
-	public static double mutateChange = 0.1; // .3 - def 0.05. Delta change for mutation operator
+	public static double mutateRate = 0.05; // .5 - def 0.01. Mutation rate for mutation operator
+	public static double mutateChange = 1; // .3 - def 0.05. Delta change for mutation operator
 	
 	//Random number generator used throughout the application
 	public static long seed = System.currentTimeMillis();
@@ -33,6 +40,8 @@ public class Parameters {
 
 	//set the NeuralNetwork class here to use your code from the GUI
 	public static Class neuralNetworkClass = ExampleEvolutionaryAlgorithm.class;
+	
+	
 	
 	/**
 	 * Do not change any methods that appear below here.
