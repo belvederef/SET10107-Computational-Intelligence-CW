@@ -9,10 +9,10 @@ import model.NeuralNetwork;
  * @author KEV
  *
  */
-public class ExampleHillClimber extends NeuralNetwork{
+public class UnusedExampleHillClimber extends NeuralNetwork{
 
 	public static void main(String[] args) {		
-		NeuralNetwork hillClimber = new ExampleHillClimber();
+		NeuralNetwork hillClimber = new UnusedExampleHillClimber();
 		hillClimber.run();
 	}
 	

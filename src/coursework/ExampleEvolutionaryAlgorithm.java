@@ -21,32 +21,48 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		//Record a copy of the best Individual in the population
 		best = getBest();
 		System.out.println("Best From Initialisation " + best);
+		
+        // Set initial temp and cooling rate
+        double temp = 10000;
+        double coolingRate = 0.003;
 
 		// main EA processing loop
 		while (evaluations < Parameters.maxEvaluations) {
 			
-			
 			// Select 2 Individuals from the current population
-			Individual parent1 = tournamentSelect(); 
-			Individual parent2 = tournamentSelect();
+			Individual parent1; 
+			Individual parent2;
 			
 			switch(Parameters.selectionType) {
-			case TOURNAMENT:
-			default:
-				parent1 = tournamentSelect(); 
-				parent2 = tournamentSelect();
-				break;
-			case ROULETTE:
-				parent1 = rouletteSelect(); 
-				parent2 = rouletteSelect();
-				break;
-			case RANK:
-				parent1 = rankSelect(); 
-				parent2 = rankSelect();
-				break;
-			case RANDOM:
-				parent1 = randSelect(); 
-				parent2 = randSelect();
+				case TOURNAMENT:
+				default:
+					parent1 = tournamentSelect(); 
+					parent2 = tournamentSelect();
+					break;
+				case ROULETTE:
+					parent1 = rouletteSelect(); 
+					parent2 = rouletteSelect();
+					break;
+				case RANK:
+					parent1 = rankSelect(); 
+					parent2 = rankSelect();
+					break;
+				case BEST:
+					parent1 = population
+						.stream()
+						.sorted((c1, c2) -> c1.compareTo(c2))
+						.findFirst()
+						.orElse(null);
+					parent2 = population
+						.stream()
+						.sorted((c1, c2) -> c1.compareTo(c2))
+						.skip(1)
+						.findFirst()
+						.orElse(null);
+					break;
+				case RANDOM:
+					parent1 = randSelect(); 
+					parent2 = randSelect();
 			}
 
 
@@ -54,43 +70,62 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			ArrayList<Individual> children;
 			
 			switch(Parameters.crossoverType) {
-			case ARITHM:
-				children = arithmeticCrossover(parent1, parent2);
-				break;
-			case ONE_POINT:
-				children = onePointCrossover(parent1, parent2);
-				break;
-			case TWO_POINTS:
-			default:
-				children = twoPointCrossover(parent1, parent2);
-				break;
-			case UNIFORM:
-				children = uniformCrossover(parent1, parent2);
-				break;
+				case ARITHM:
+					children = arithmeticCrossover(parent1, parent2);
+					break;
+				case ONE_POINT:
+					children = onePointCrossover(parent1, parent2);
+					break;
+				case TWO_POINTS:
+				default:
+					children = twoPointCrossover(parent1, parent2);
+					break;
+				case UNIFORM:
+					children = uniformCrossover(parent1, parent2);
+					break;
 			}
-			
-			
+						
 			//mutate the offspring
 			mutate(children);
+//			mutateBoundaryMultiply(children);
+//			mutateBoundaryAddition(children);
+			
+			evaluateIndividuals(children);
+			children.set(0, mutateAnnealation(children.get(0), temp));
+			children.set(1, mutateAnnealation(children.get(1), temp));
+//			mutateAnnealation(children.get(0), temp);
+//			mutateAnnealation(children.get(1), temp);
+			temp *= 1 - coolingRate;
 			
 			// Evaluate the children
 			evaluateIndividuals(children);			
 
 			// Replace children in population
 			switch(Parameters.replaceType) {
-			case REP_TOURNAMENT:
-			default:
-				tournamentReplace(children);
-				break;
-			case REP_WORST:
-				replaceWorst(children);
-				break;
+				case REP_TOURNAMENT:
+				default:
+					tournamentReplace(children);
+					break;
+				case REP_WORST:
+					replaceWorst(children);
+					break;
 			}
 
 //			regeneratePopulation();
 
 			// check to see if the best has improved
+//			if (getBest().fitness == best.fitness) {
+//				Parameters.setMutationRate(Parameters.mutateRate + 0.1);
+//				Parameters.setMutationChange(Parameters.random.nextDouble() * 2.0);
+//			} else {
+//				Parameters.setMutationRate(0.05);
+//				Parameters.setMutationChange(1);
+//			}
+			
+			injectImmigrant();  // Inject an immigrant individual
 			best = getBest();
+//			System.out.println(best);
+//			System.out.println(getBest());
 			
 			// Implemented in NN class. 
 			outputStats();
@@ -306,10 +341,54 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 		}		
 	}
-    private void mutateBoundaryMultiply(Individual[] children) {
+	
+    public static double acceptanceProbability(double energy, double newEnergy, double temperature) {
+        // If the new solution is better, accept it
+        if (newEnergy < energy) {
+            return 1.0;
+        }
+        // If the new solution is worse, calculate an acceptance probability
+        return Math.exp((energy - newEnergy) / temperature);
+    }
+	private Individual mutateAnnealation(Individual individual, double temp) {
+		Individual newIndividual = individual.copy();
+		
+		// Get a random genes in the chromosome (change with next int)
+        int chromeGenePos1 = (int) (newIndividual.chromosome.length * Parameters.random.nextDouble());
+        int chromeGenePos2 = (int) (newIndividual.chromosome.length * Parameters.random.nextDouble());
+
+        // Get the values at selected positions in the chromosome
+        double geneSwap1 = newIndividual.chromosome[chromeGenePos1];
+        double geneSwap2 = newIndividual.chromosome[chromeGenePos2];
+
+        // Swap them
+        newIndividual.chromosome[chromeGenePos1] = geneSwap2;
+        newIndividual.chromosome[chromeGenePos2] = geneSwap1;
+        
+        // Evaluate fitness
+        newIndividual.fitness = Fitness.evaluate(newIndividual, this);
+        
+        // Get energy of solutions
+        double currentEnergy = individual.fitness;
+        double neighbourEnergy = newIndividual.fitness;
+		
+		// Decide if we should accept the neighbour
+        if (acceptanceProbability(currentEnergy, neighbourEnergy, temp) 
+        		> Parameters.random.nextDouble()) {
+        	individual = newIndividual;
+        }
+
+        return individual;
+        // Keep track of the best solution found
+//        if (currentIndividual.fitness < best.fitness) {
+//            best = currentIndividual.copy();
+//        }
+	}
+	
+    private void mutateBoundaryMultiply(ArrayList<Individual> individuals) {
         int operation;
         double chance;
-        for (Individual child : children) {
+        for (Individual child : individuals) {
             for (int i = 0; i < child.chromosome.length; ++i) {
                 chance = Parameters.random.nextDouble();
                 operation = Parameters.random.nextInt(2);
@@ -323,10 +402,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
         }
     }
 
-    private void mutateBoundaryAddition(Individual[] children) {
+    private void mutateBoundaryAddition(ArrayList<Individual> individuals) {
         int operation;
         double chance;
-        for (Individual child : children) {
+        for (Individual child : individuals) {
             for (int i = 0; i < child.chromosome.length; ++i) {
                 chance = Parameters.random.nextDouble();
                 operation = Parameters.random.nextInt(2);
@@ -412,26 +491,59 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 	
 
-    private void injectImmigrant(Individual[] population) {
-        Individual immigrant = new Individual();
-        evaluateIndividuals(new Individual[]{immigrant});
-        Arrays.sort(population);
-        population[population.length - 3] = immigrant;
+    private void injectImmigrant() {
+        Individual newIndividual = new Individual();
+        newIndividual.fitness = Fitness.evaluate(newIndividual, this);
+        population.sort((c1, c2) -> c1.compareTo(c2));
+        population.set(population.size() - 2, newIndividual);
     }
-    
-    private void evaluateIndividuals(Individual[] individuals) {
-        for (Individual individual : individuals) {
-//            individual.fitness = meanSquaredError(Parameters.trainData, individual.chromosome);
-        }
-    }
+//    
+//    private void evaluateIndividuals(Individual[] individuals) {
+//        for (Individual individual : individuals) {
+////            individual.fitness = meanSquaredError(Parameters.trainData, individual.chromosome);
+//        }
+//    }
 	
 	@Override
 	public double activationFunction(double x) {
-		if (x < -20.0) {
-			return -1.0;
-		} else if (x > 20.0) {
-			return 1.0;
-		}
-		return Math.tanh(x);
+		// Sigmoid
+//		return 1 / (1 + Math.pow(Math.E, -x));
+		
+		// Tanh
+//		if (x < -20.0) {
+//			return -1.0;
+//		} else if (x > 20.0) {
+//			return 1.0;
+//		}
+//		return Math.tanh(x);
+		
+		// Heaviside or step function
+//		if (x <= 0) return -1.00;
+//		return 1.0;
+		
+		// ReLU
+//		if (x > 0) return x;
+//		return -1;
+		
+		// Leaky ReLU
+//		if (x > 0) return x;
+//		return 0.01 * x;
+		
+		// ELU - Top 2 most effective
+		if (x > 0) return x;
+		return 0.1 * (Math.pow(Math.E, x) - 1);
+//		return 1.673263 * (Math.pow(Math.E, x) - 1);
+
+	 	
+		// SELU - top 2 most effective
+//		if (x > 0) return x * 1.0507009;
+//		return 1.0507009 * (1.673263 * Math.pow(Math.E, x)) - 1.673263;
+		
+		// Swish
+//		return x * (1 / (1 + Math.pow(Math.E, -x)));
+		
+		// HardELiSH - https://arxiv.org/pdf/1808.00783.pdf
+//		if (x < 0) return Math.max(0, Math.min(1, (x + 1) / 2)) * (Math.pow(Math.E, x) - 1);
+//		return x * Math.max(0, Math.min(1, (x + 1) / 2));
 	}
 }

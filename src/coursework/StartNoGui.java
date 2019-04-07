@@ -13,46 +13,24 @@ import model.NeuralNetwork;
 public class StartNoGui {
 
 	public static void main(String[] args) {
-		/**
-		 * Train the Neural Network using our Evolutionary Algorithm 
-		 * 
-		 */
-
-		/*
-		 * Set the parameters here or directly in the Parameters Class.
-		 * Note you should use a maximum of 20,0000 evaluations for your experiments 
-		 */
-		Parameters.maxEvaluations = 20000; // Used to terminate the EA after this many generations
-		Parameters.popSize = 200; // Population Size
-
-		//number of hidden nodes in the neural network
-		Parameters.setHidden(5);
-		
+		/*** Train the Neural Network using our Evolutionary Algorithm **/
+	
 		//Set the data set for training 
 		Parameters.setDataSet(DataSet.Training);
 		
-		
 		//Create a new Neural Network Trainer Using the above parameters 
 		NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
-		
-		//train the neural net (Go and make a coffee) 
 		nn.run();
 		
-		/* Print out the best weights found
-		 * (these will have been saved to disk in the project default directory) 
-		 */
-		System.out.println(nn.best);
+		/* Print out the best weights found */
+//			System.out.println(nn.best);
 		
-		
-		
-		
-		/**
-		 * We now need to test the trained network on the unseen test Set
-		 */
+		/*test the trained network on the unseen test set */
 		Parameters.setDataSet(DataSet.Test);
 		double fitness = Fitness.evaluate(nn);
+
 		System.out.println("Fitness on " + Parameters.getDataSet() + " " + fitness);
-		
+	
 		
 		/**
 		 * Or We can reload the NN from the file generated during training and test it on a data set 
@@ -72,5 +50,36 @@ public class StartNoGui {
 		
 		
 		
+	}
+	
+	private void findBestHiddenNodes() {
+		int bestHiddenNodes = 2;
+		double bestFitness = 100;
+		
+		
+		for(int i=10; i<16; i++) {
+			//Set the data set for training 
+			Parameters.setDataSet(DataSet.Training);
+			Parameters.setHidden(i);
+			
+			//Create a new Neural Network Trainer Using the above parameters 
+			NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+			nn.run();
+			
+			/* Print out the best weights found */
+//			System.out.println(nn.best);
+			
+			/*test the trained network on the unseen test set */
+			Parameters.setDataSet(DataSet.Test);
+			double fitness = Fitness.evaluate(nn);
+			if (fitness < bestFitness) {
+				bestFitness = fitness;
+				bestHiddenNodes = i;
+			}
+//			System.out.println("Fitness on " + Parameters.getDataSet() + " " + fitness);
+			System.out.println("Fitness with " + i + " hidden nodes is " + fitness);
+		}
+		System.out.println("Best fitness was " + bestFitness + " with " 
+				+ bestHiddenNodes + " hidden nodes.");
 	}
 }
