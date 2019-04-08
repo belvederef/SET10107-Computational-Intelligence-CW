@@ -45,6 +45,25 @@ public class Parameters {
 	public static void setMutationChange(double mutationChange) {
 		mutateChange = mutationChange;
 	}
+	
+	public static int getPopSize() {
+		return popSize;
+	}
+	public static void setPopSize(int popSize) {
+		Parameters.popSize = popSize;
+	}
+	public static double getMutateRate() {
+		return mutateRate;
+	}
+	public static void setMutateRate(double mutateRate) {
+		Parameters.mutateRate = mutateRate;
+	}
+	public static double getMutateChange() {
+		return mutateChange;
+	}
+	public static void setMutateChange(double mutateChange) {
+		Parameters.mutateChange = mutateChange;
+	}
 	/**
 	 * Do not change any methods that appear below here.
 	 * 

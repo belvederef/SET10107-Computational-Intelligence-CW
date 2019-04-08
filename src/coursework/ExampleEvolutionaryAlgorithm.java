@@ -14,7 +14,7 @@ import model.NeuralNetwork;
 public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	// The Main Evolutionary Loop
 	@Override
-	public void run() {		
+	public void run() {					
 		//Initialise a population of Individuals with random weights
 		population = initialise();
 
@@ -91,9 +91,9 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			
 			evaluateIndividuals(children);
 			// Mutate with annealing function
-			children.set(0, mutateAnnealation(children.get(0), temp));
-			children.set(1, mutateAnnealation(children.get(1), temp));
-			temp *= 1 - coolingRate;
+//				children.set(0, mutateAnnealation(children.get(0), temp));
+//				children.set(1, mutateAnnealation(children.get(1), temp));
+//				temp *= 1 - coolingRate;
 			
 			
 			
@@ -105,19 +105,17 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			} 
 
 			// Escape local optima
-//			noImprovement = getBest().fitness == best.fitness ? noImprovement + 1 : 0;
-			if (custEvolutionCount >= 4500 && getBest().fitness < 0.15) {
-//			if (noImprovement >= 500) {
-				mutateFromBestN(10, 0.05, 1);
-				keepBestN(70);
-				custEvolutionCount = 0;
-////				mutate(population);
-////				evaluateIndividuals(population);
-//				
-////				mutateApartFirstN(10, 0.5);
-//				mutateFromBestN(10, 0.05, 1.2);
-//				noImprovement = 0;
-			}
+//				if (custEvolutionCount >= 4500 && getBest().fitness < 0.15) {
+////				if (noImprovement >= 500) {
+//					mutateFromBestN(10, 0.05, 1);
+//					keepBestN(70);
+//					custEvolutionCount = 0;
+////					mutate(population);
+////					evaluateIndividuals(population);
+////					
+////					mutateApartFirstN(10, 0.5);
+////					mutateFromBestN(10, 0.05, 1.2);
+//				}
 			
 			// Evaluate the children
 			evaluateIndividuals(children);			
@@ -133,27 +131,26 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 					break;
 			}
 
-//			regeneratePopulation();
+//				regeneratePopulation();
 
 			// check to see if the best has improved
-//			if (getBest().fitness == best.fitness) {
-//				Parameters.setMutationRate(Parameters.mutateRate + 0.1);
-//				Parameters.setMutationChange(Parameters.random.nextDouble() * 2.0);
-//			} else {
-//				Parameters.setMutationRate(0.05);
-//				Parameters.setMutationChange(1);
-//			}
+//				if (getBest().fitness == best.fitness) {
+//					Parameters.setMutationRate(Parameters.mutateRate + 0.1);
+//					Parameters.setMutationChange(Parameters.random.nextDouble() * 2.0);
+//				} else {
+//					Parameters.setMutationRate(0.05);
+//					Parameters.setMutationChange(1);
+//				}
 			
 			injectIndividual();  // Inject a new individual
 			
 			best = getBest();
 			
 			
-			outputStats();		
+			outputStats();
 		}
 
-		//save the trained network to disk
-		saveNeuralNetwork();
+//		saveNeuralNetwork();  // save the trained network to disk
 	}
 
 	
@@ -230,6 +227,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	private Individual tournamentSelect() {
 		/**
 		 * Elitism - copy the best chromosome (or a few best chromosomes) to new population
+		 * (happens if tournament size is equal to total pop size)
 		 * 1 - Pick t solutions completely at random from the population
 		 * 2 - Select the best of the t solutions to be a parent
 		 */
