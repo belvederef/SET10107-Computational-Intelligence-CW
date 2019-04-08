@@ -2,6 +2,9 @@ package coursework;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 import model.Fitness;
 import model.Individual;
 import model.NeuralNetwork;
@@ -16,7 +19,18 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	@Override
 	public void run() {					
 		//Initialise a population of Individuals with random weights
-		population = initialise();
+		switch(Parameters.initialisationType) {
+		case AUGMENTED:
+			population = augmentedInitialise();
+			break;
+		case POS_NEG:
+			population = PosNegInitialise();
+			break;
+		case RANDOM:
+		default:
+			population = initialise();
+			break;
+		}
 
 		//Record a copy of the best Individual in the population
 		best = getBest();
@@ -150,7 +164,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			outputStats();
 		}
 
-//		saveNeuralNetwork();  // save the trained network to disk
+		saveNeuralNetwork();  // save the trained network to disk
 	}
 
 	
@@ -194,6 +208,56 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		return population;
 	}
 	
+	private ArrayList<Individual> augmentedInitialise() {
+		population = new ArrayList<>();
+		for (int i = 0; i < Parameters.popSize + 1000; ++i) {
+			// chromosome weights are initialised randomly in the constructor
+			Individual individual = new Individual();
+			population.add(individual);
+		}
+		evaluateIndividuals(population);
+		
+		population = (ArrayList<Individual>) population
+			.stream()
+			.sorted((c1, c2) -> c1.compareTo(c2))
+			.limit(Parameters.popSize)
+			.collect(Collectors.toCollection(ArrayList::new));
+		
+		
+		return population;
+	}
+	
+	private ArrayList<Individual> PosNegInitialise() {
+		population = new ArrayList<>();
+		for (int i = 0; i < Parameters.popSize; ++i) {
+			// chromosome weights are initialised randomly in the constructor
+			Individual individual = new Individual();
+			Individual individual2 = individual.copy();
+			
+			for (int j=0; j<individual2.chromosome.length; j++) {
+				// Flip chromes
+				individual2.chromosome[j] = 0 - individual2.chromosome[j];
+			}
+			individual.fitness = Fitness.evaluate(individual, this);
+			individual2.fitness = Fitness.evaluate(individual2, this);
+			
+			if (individual.fitness < individual2.fitness) {
+				population.add(individual);
+			} else {
+				population.add(individual2);
+			}
+		}
+		
+//		population = (ArrayList<Individual>) population
+//			.stream()
+//			.sorted((c1, c2) -> c1.compareTo(c2))
+//			.limit(Parameters.popSize)
+//			.collect(Collectors.toCollection(ArrayList::new));
+//		
+		
+		return population;
+	}
+	
 	private void partialInitialise() {
 		Individual individual;
 		population.sort((c1, c2) -> c2.compareTo(c1));
@@ -231,7 +295,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		 * 1 - Pick t solutions completely at random from the population
 		 * 2 - Select the best of the t solutions to be a parent
 		 */
-		final int TOURNAMET_SIZE = (int) (Parameters.popSize * 0.2);
+		final int TOURNAMET_SIZE = (int) (Parameters.popSize * Parameters.tournamentSize);
 		
 		Collections.shuffle(population);
 		Individual parent = population
@@ -496,7 +560,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 	// Replace using tournament - same as selection but with worst
 	private void tournamentReplace(ArrayList<Individual> individuals) {
-		final int TOURNAMET_SIZE = 20;
+		final int TOURNAMET_SIZE = (int) (Parameters.popSize * Parameters.tournamentSize);
 		
 		for (Individual individual : individuals) {
 			Collections.shuffle(population);

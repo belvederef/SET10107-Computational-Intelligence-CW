@@ -8,11 +8,13 @@ import model.LunarParameters.DataSet;
 
 public class Parameters {
 	// Possible options
+	public enum InitialisationType { RANDOM, AUGMENTED, POS_NEG } // augmented is best
 	public enum SelectionType { RANDOM, TOURNAMENT, ROULETTE, RANK, BEST }
 	public enum CrossoverType { UNIFORM, ONE_POINT, TWO_POINTS, ARITHM }
 	public enum ReplaceType { REP_WORST, REP_TOURNAMENT }
 	
 	// The ones chosen
+	public static InitialisationType initialisationType = InitialisationType.RANDOM;  
 	public static SelectionType selectionType = SelectionType.TOURNAMENT;
 	public static CrossoverType crossoverType = CrossoverType.TWO_POINTS;
 	public static ReplaceType replaceType = ReplaceType.REP_TOURNAMENT;
@@ -22,7 +24,8 @@ public class Parameters {
 	public static double minGene = -1; // specifies minimum and maximum weight values 
 	public static double maxGene = +1;
 		
-	public static int popSize = 100; // default: 40
+	public static double tournamentSize = 0.2; // percentage over population (select and replace)
+	public static int popSize = 60; // default: 40
 	public static int maxEvaluations = 20000; // max 20000
 	
 	// Parameters for mutation 

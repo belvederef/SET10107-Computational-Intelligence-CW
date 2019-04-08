@@ -10,3 +10,5 @@ popSize, train, test (avg over 10 runs each)
 90,0.03821,0.15217
 100,0.04859,0.11209
 110,0.03843,0.12880
+
+mutRate, train, test (avg over 10 runs each)
