@@ -15,7 +15,7 @@ public class Parameters {
 	// The ones chosen
 	public static SelectionType selectionType = SelectionType.TOURNAMENT;
 	public static CrossoverType crossoverType = CrossoverType.TWO_POINTS;
-	public static ReplaceType replaceType = ReplaceType.REP_TOURNAMENT;
+	public static ReplaceType replaceType = ReplaceType.REP_WORST;
 	
 	private static int numHidden = 10;	
 	private static int numGenes = calculateNumGenes();
@@ -29,7 +29,7 @@ public class Parameters {
 	// Rate = probability of changing a gene
 	// Change = the maximum +/- adjustment to the gene value
 	public static double mutateRate = 0.05; // good 0.05 - def 0.01. Mutation rate for mutation operator
-	public static double mutateChange = 1; // good 1.00 - def 0.05. Delta change for mutation operator
+	public static double mutateChange = 0.9; // good 1.00 - def 0.05. Delta change for mutation operator
 	
 	//Random number generator used throughout the application
 	public static long seed = System.currentTimeMillis();

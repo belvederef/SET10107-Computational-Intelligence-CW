@@ -22,9 +22,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		best = getBest();
 		System.out.println("Best From Initialisation " + best);
 		
-        // Set initial temp and cooling rate
+        // Set initial temp, cooling rate, and improvement count
         double temp = 10000;
         double coolingRate = 0.003;
+        int noImprovement = 100;
 
 		// main EA processing loop
 		while (evaluations < Parameters.maxEvaluations) {
@@ -87,15 +88,39 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 						
 			//mutate the offspring
 			mutate(children);
-//			mutateBoundaryMultiply(children);
-//			mutateBoundaryAddition(children);
 			
 			evaluateIndividuals(children);
+			// Mutate with annealing function
 			children.set(0, mutateAnnealation(children.get(0), temp));
 			children.set(1, mutateAnnealation(children.get(1), temp));
-//			mutateAnnealation(children.get(0), temp);
-//			mutateAnnealation(children.get(1), temp);
 			temp *= 1 - coolingRate;
+			
+			
+			
+			// Re-initialise
+//			noImprovement = getBest().fitness == best.fitness ? noImprovement + 1 : 0;
+			noImprovement += 7;
+//			if (noImprovement >= 2000 && getBest().fitness > 0.1) {
+//				keepBestN(50);
+//				population = initialise();
+				
+//				noImprovement = 0;
+//			}
+			
+			if (noImprovement >= 1000 && getBest().fitness > 0.15) {
+				population = initialise();
+				noImprovement = 0;
+			} else if (noImprovement >= 4000 && getBest().fitness < 0.15 && getBest().fitness > 0.06) {
+				mutateFromBestN(10, 0.05, 1);
+				keepBestN(70);
+				noImprovement = 0;
+////				mutate(population);
+////				evaluateIndividuals(population);
+//				
+////				mutateApartFirstN(10, 0.5);
+//				mutateFromBestN(10, 0.05, 1.2);
+//				noImprovement = 0;
+			}
 			
 			// Evaluate the children
 			evaluateIndividuals(children);			
@@ -123,14 +148,23 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 //			}
 			
 			injectImmigrant();  // Inject an immigrant individual
+			
+			
+//			if (noImprovement >= 500 && getBest().fitness > 0.05) {
+//				partialInitialise();
+//				noImprovement = 0;
+//			}
+			
+
+			
+//			if(evaluations > 1000 && getBest().fitness > 0.16) {
+////				population = initialise();
+//				keepBestN(10);
+//			}
 			best = getBest();
-//			System.out.println(best);
-//			System.out.println(getBest());
 			
-			// Implemented in NN class. 
-			outputStats();
 			
-			//Increment number of completed generations			
+			outputStats();		
 		}
 
 		//save the trained network to disk
@@ -165,7 +199,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 
 	/**
-	 * Generates a randomly initialised population
+	 * INITIALISATION. Generates a randomly initialised population
 	 */
 	private ArrayList<Individual> initialise() {
 		population = new ArrayList<>();
@@ -177,7 +211,27 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		evaluateIndividuals(population);
 		return population;
 	}
+	
+	private void partialInitialise() {
+		Individual individual;
+		population.sort((c1, c2) -> c2.compareTo(c1));
+		for (int i = 0; i < 15; ++i) {
+			individual = new Individual();
+			population.remove(0);
+			population.add(individual);
+		}
+		evaluateIndividuals(population);
+	}
 
+	private void keepBestN(int n) {
+		population.sort((c1, c2) -> c2.compareTo(c1));
+		for (int i = 0; i < Parameters.popSize - n; ++i) {
+			Individual individual = new Individual();
+			population.remove(0);
+			population.add(individual);
+		}
+		evaluateIndividuals(population);
+	}
 	
 	
 	
@@ -341,6 +395,65 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 		}		
 	}
+	private void mutateApartFirstN(int n, double mutationRate) {	
+		population.sort((c1, c2) -> c2.compareTo(c1));
+		for(int i=0; i < Parameters.popSize - n; i++) {
+			Individual individual = population.get(i);
+			for (int j = 0; j < individual.chromosome.length; j++) {
+				if (Parameters.random.nextDouble() < mutationRate) {
+					if (Parameters.random.nextBoolean()) {
+						individual.chromosome[j] += (Parameters.mutateChange);
+					} else {
+						individual.chromosome[j] -= (Parameters.mutateChange);
+					}
+				}
+			}
+		}		
+		evaluateIndividuals(population);
+	}
+	private void mutateFromBestN(int n, double mutationRate, double mutationChange) {	
+		double before = 0;
+		double after = 0;
+		for (Individual individual : population) {
+			individual.fitness = Fitness.evaluate(individual, this);
+			before += individual.fitness;
+		}
+		before = before / population.size();
+		
+		
+		ArrayList<Individual> bests = new ArrayList<Individual>();
+		
+		population.sort((c1, c2) -> c1.compareTo(c2));
+		for (int i=0; i<n; i++) {	
+			bests.add(population.get(i).copy());
+		}
+		
+		population.sort((c1, c2) -> c2.compareTo(c1));
+		
+		
+		for(int i=0; i < n; i++) {
+			Individual individual = bests.get(i);
+			for (int j = 0; j < individual.chromosome.length; j++) {
+				if (Parameters.random.nextDouble() < mutationRate) {
+					if (Parameters.random.nextBoolean()) {
+						individual.chromosome[j] += (mutationChange);
+					} else {
+						individual.chromosome[j] -= (mutationChange);
+					}
+				}
+			}
+			population.set(i, individual);
+		}		
+//		evaluateIndividuals(population);
+		
+		for (Individual individual : population) {
+			individual.fitness = Fitness.evaluate(individual, this);
+			after += individual.fitness;
+		}
+		after = after / population.size();
+		System.out.println("before: " + before + " after: " + after);
+	}
+	
 	
     public static double acceptanceProbability(double energy, double newEnergy, double temperature) {
         // If the new solution is better, accept it
@@ -384,51 +497,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 //            best = currentIndividual.copy();
 //        }
 	}
-	
-    private void mutateBoundaryMultiply(ArrayList<Individual> individuals) {
-        int operation;
-        double chance;
-        for (Individual child : individuals) {
-            for (int i = 0; i < child.chromosome.length; ++i) {
-                chance = Parameters.random.nextDouble();
-                operation = Parameters.random.nextInt(2);
-                if (chance <= Parameters.mutateRate) {
-                    child.chromosome[i] = (operation < 1) ?
-                            child.chromosome[i] * -Parameters.mutateChange :
-                            child.chromosome[i] * Parameters.mutateChange;
-                }
-                checkChromosome(child);
-            }
-        }
-    }
-
-    private void mutateBoundaryAddition(ArrayList<Individual> individuals) {
-        int operation;
-        double chance;
-        for (Individual child : individuals) {
-            for (int i = 0; i < child.chromosome.length; ++i) {
-                chance = Parameters.random.nextDouble();
-                operation = Parameters.random.nextInt(2);
-                if (chance <= Parameters.mutateRate) {
-                    child.chromosome[i] = (operation < 1) ?
-                            child.chromosome[i] - Parameters.mutateChange :
-                            child.chromosome[i] + Parameters.mutateChange;
-                }
-                checkChromosome(child);
-            }
-        }
-    }
-
-    private void checkChromosome(Individual child) {
-        for (Double gene : child.chromosome) {
-            if (gene < Parameters.minGene) {
-                gene = Parameters.minGene;
-            } else if (gene > Parameters.maxGene) {
-                gene = Parameters.maxGene;
-            }
-        }
-    }
-
 	
 	
 	

@@ -1,31 +1,10 @@
 package coursework;
 
-import java.util.ArrayList;
-
 import model.Fitness;
 import model.Individual;
 import model.NeuralNetwork;
 
 public class SimulatedAnnealing extends NeuralNetwork{
-
-	/**
-	 * Sets the fitness of the individuals passed as parameters
-	 */
-	private void evaluateIndividuals(Individual[] individuals) {
-		for (Individual individual : individuals) {
-			individual.fitness = Fitness.evaluate(individual, this);
-		}
-	}
-	
-    // Calculate the acceptance probability
-    public static double acceptanceProbability(double energy, double newEnergy, double temperature) {
-        // If the new solution is better, accept it
-        if (newEnergy < energy) {
-            return 1.0;
-        }
-        // If the new solution is worse, calculate an acceptance probability
-        return Math.exp((energy - newEnergy) / temperature);
-    }
 	
 	public static void main(String[] args) {		
 		NeuralNetwork simulatedAnnealing= new SimulatedAnnealing();
@@ -34,10 +13,8 @@ public class SimulatedAnnealing extends NeuralNetwork{
 	
 	@Override
 	public void run() {		
-        // Set initial temp
+        // Set initial temp and cooling rate
         double temp = 10000;
-		
-        // Cooling rate
         double coolingRate = 0.003;
         
 		// initialise a single individual
@@ -46,65 +23,63 @@ public class SimulatedAnnealing extends NeuralNetwork{
 		
 		// set as best
 		best = currentIndividual.copy();
-		
 		System.out.println("Initial solution fitness: " + best);
         
-//		while (temp > 1) {
 		for(int gen = 0; gen < Parameters.maxEvaluations; gen++) {
 			Individual newIndividual = currentIndividual.copy();
 			
-			// Get a random genes in the chromosome (change with next int)
-            int chromeGenePos1 = (int) (newIndividual.chromosome.length * Parameters.random.nextDouble());
-            int chromeGenePos2 = (int) (newIndividual.chromosome.length * Parameters.random.nextDouble());
+			// Get random gene locations in the chromosome 
+            int chromeGenePos1 = Parameters.random.nextInt(newIndividual.chromosome.length);
+            int chromeGenePos2 = Parameters.random.nextInt(newIndividual.chromosome.length);
 
-            // Get the values at selected positions in the chromosome
+            // Get the values from the selected positions in the chromosome
             double geneSwap1 = newIndividual.chromosome[chromeGenePos1];
             double geneSwap2 = newIndividual.chromosome[chromeGenePos2];
 
-            // Swap them
+            // Swap genes
             newIndividual.chromosome[chromeGenePos1] = geneSwap2;
             newIndividual.chromosome[chromeGenePos2] = geneSwap1;
             
             newIndividual.fitness = Fitness.evaluate(newIndividual, this);
-            
-            // Get energy of solutions
-            double currentEnergy = currentIndividual.fitness;
-            double neighbourEnergy = newIndividual.fitness;
-			
+            			
 			// Decide if we should accept the neighbour
-            if (acceptanceProbability(currentEnergy, neighbourEnergy, temp) 
-            		> Parameters.random.nextDouble()) {
+            double acceptanceProbability = acceptanceProbability(
+            		currentIndividual.fitness, 
+            		newIndividual.fitness, 
+            		temp);
+            if (acceptanceProbability > Parameters.random.nextDouble()) {
                 currentIndividual = newIndividual.copy();
             }
 
-            // Keep track of the best solution found
+            // Replace best solution found
             if (currentIndividual.fitness < best.fitness) {
                 best = currentIndividual.copy();
             }
             
-            // Cool system
+            // Cool system down
             temp *= 1 - coolingRate;
+            System.out.println(gen + "\t" + best);
 		}
 		
         System.out.println("Final solution fitness: " + best.fitness);
         System.out.println("Final: " + best);
 		
-		//run for max evaluations
-//		for(int gen = 0; gen < Parameters.maxEvaluations; gen++) {
-//			//mutate the best
-//			Individual candidate = mutateBest();
-//			
-//			//accept if better
-//			if(candidate.fitness < best.fitness) {
-//				best = candidate;
-//			}
-//			
-//			outputStats();
-//		}
+//		outputStats();
 //		saveNeuralNetwork();
 	}
 
-	
+
+    // Calculate the acceptance probability
+    public static double acceptanceProbability(double currFitness, double newFitness, double temp) {
+        // If the new solution is better, simply accept it
+        if (newFitness < currFitness) {
+            return 1.0;
+        }
+        // If the new solution is worse, return an acceptance probability
+        return Math.exp((currFitness - newFitness) / temp);
+    }
+
+    
 	@Override
 	public double activationFunction(double x) {
 //		if (x < -20.0) {
@@ -113,10 +88,21 @@ public class SimulatedAnnealing extends NeuralNetwork{
 //			return 1.0;
 //		}
 //		return Math.tanh(x);
+//		
 		// ELU 
 		if (x > 0) return x;
 		return 0.1 * (Math.pow(Math.E, x) - 1);
+		
+		// SELU
+//		if (x > 0) return x * 1.0507009;
+//		return 1.0507009 * (1.673263 * Math.pow(Math.E, x)) - 1.673263;
+		
+		// Swish
+//		return x * (1 / (1 + Math.pow(Math.E, -x)));
+		
+		// HardELiSH - https://arxiv.org/pdf/1808.00783.pdf
+//		if (x < 0) return Math.max(0, Math.min(1, (x + 1) / 2)) * (Math.pow(Math.E, x) - 1);
+//		return x * Math.max(0, Math.min(1, (x + 1) / 2));
 	}
-
 	
 }
