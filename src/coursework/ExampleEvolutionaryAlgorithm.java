@@ -1,11 +1,11 @@
 package coursework;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import model.Fitness;
 import model.Individual;
 import model.NeuralNetwork;
+
 
 /**
  * Implements a basic Evolutionary Algorithm to train a Neural Network
@@ -25,7 +25,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
         // Set initial temp, cooling rate, and improvement count
         double temp = 10000;
         double coolingRate = 0.003;
-        int noImprovement = 100;
+        int custEvolutionCount = 100;
 
 		// main EA processing loop
 		while (evaluations < Parameters.maxEvaluations) {
@@ -98,22 +98,19 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			
 			
 			// Re-initialise
-//			noImprovement = getBest().fitness == best.fitness ? noImprovement + 1 : 0;
-			noImprovement += 7;
-//			if (noImprovement >= 2000 && getBest().fitness > 0.1) {
-//				keepBestN(50);
-//				population = initialise();
-				
-//				noImprovement = 0;
-//			}
-			
-			if (noImprovement >= 1000 && getBest().fitness > 0.15) {
+			custEvolutionCount += 7;
+			if (custEvolutionCount >= 1000 && getBest().fitness > 0.15) {
 				population = initialise();
-				noImprovement = 0;
-			} else if (noImprovement >= 4000 && getBest().fitness < 0.15 && getBest().fitness > 0.06) {
+				custEvolutionCount = 0;
+			} 
+
+			// Escape local optima
+//			noImprovement = getBest().fitness == best.fitness ? noImprovement + 1 : 0;
+			if (custEvolutionCount >= 4500 && getBest().fitness < 0.15) {
+//			if (noImprovement >= 500) {
 				mutateFromBestN(10, 0.05, 1);
 				keepBestN(70);
-				noImprovement = 0;
+				custEvolutionCount = 0;
 ////				mutate(population);
 ////				evaluateIndividuals(population);
 //				
@@ -147,20 +144,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 //				Parameters.setMutationChange(1);
 //			}
 			
-			injectImmigrant();  // Inject an immigrant individual
+			injectIndividual();  // Inject a new individual
 			
-			
-//			if (noImprovement >= 500 && getBest().fitness > 0.05) {
-//				partialInitialise();
-//				noImprovement = 0;
-//			}
-			
-
-			
-//			if(evaluations > 1000 && getBest().fitness > 0.16) {
-////				population = initialise();
-//				keepBestN(10);
-//			}
 			best = getBest();
 			
 			
@@ -248,7 +233,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		 * 1 - Pick t solutions completely at random from the population
 		 * 2 - Select the best of the t solutions to be a parent
 		 */
-		final int TOURNAMET_SIZE = 20;
+		final int TOURNAMET_SIZE = (int) (Parameters.popSize * 0.2);
 		
 		Collections.shuffle(population);
 		Individual parent = population
@@ -559,18 +544,13 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 	
 
-    private void injectImmigrant() {
+    private void injectIndividual() {
         Individual newIndividual = new Individual();
         newIndividual.fitness = Fitness.evaluate(newIndividual, this);
-        population.sort((c1, c2) -> c1.compareTo(c2));
-        population.set(population.size() - 2, newIndividual);
+        population.sort((c1, c2) -> c2.compareTo(c1));
+        population.set(2, newIndividual);
     }
-//    
-//    private void evaluateIndividuals(Individual[] individuals) {
-//        for (Individual individual : individuals) {
-////            individual.fitness = meanSquaredError(Parameters.trainData, individual.chromosome);
-//        }
-//    }
+
 	
 	@Override
 	public double activationFunction(double x) {

@@ -15,7 +15,7 @@ public class Parameters {
 	// The ones chosen
 	public static SelectionType selectionType = SelectionType.TOURNAMENT;
 	public static CrossoverType crossoverType = CrossoverType.TWO_POINTS;
-	public static ReplaceType replaceType = ReplaceType.REP_WORST;
+	public static ReplaceType replaceType = ReplaceType.REP_TOURNAMENT;
 	
 	private static int numHidden = 10;	
 	private static int numGenes = calculateNumGenes();
