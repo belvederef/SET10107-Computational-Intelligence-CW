@@ -54,8 +54,8 @@ public class StartNoGui {
 		
 		try {
 //			findBestPopSize();
-			findBestMutRate();
-//			findBestHiddenNodes();
+//			findBestMutRate();
+			findBestHiddenNodes();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -111,7 +111,7 @@ public class StartNoGui {
 	}
 	
 	private static void findBestMutRate() throws IOException {		
-		for (double i=0.05; i < 1.05; i = i + 0.10) {
+		for (double i=0.45; i < 1.05; i = i + 0.10) {
 			// For each pop size
 			double avgTrain = 0;
 			double avgTest = 0;
@@ -152,34 +152,44 @@ public class StartNoGui {
 		}
 	}
 	
-	private void findBestHiddenNodes() {
-		int bestHiddenNodes = 2;
-		double bestFitness = 100;
-		
-		
-		for(int i=10; i<16; i++) {
-			//Set the data set for training 
-			Parameters.setDataSet(DataSet.Training);
-			Parameters.setHidden(i);
+	private static void findBestHiddenNodes() throws IOException {		
+		for(int i=10; i<15; i++) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 20;
 			
-			//Create a new Neural Network Trainer Using the above parameters 
-			NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
-			nn.run();
-			
-			/* Print out the best weights found */
-//			System.out.println(nn.best);
-			
-			/*test the trained network on the unseen test set */
-			Parameters.setDataSet(DataSet.Test);
-			double fitness = Fitness.evaluate(nn);
-			if (fitness < bestFitness) {
-				bestFitness = fitness;
-				bestHiddenNodes = i;
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.setHidden(i);
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
 			}
-//			System.out.println("Fitness on " + Parameters.getDataSet() + " " + fitness);
-			System.out.println("Fitness with " + i + " hidden nodes is " + fitness);
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.getNumHidden(), 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
 		}
-		System.out.println("Best fitness was " + bestFitness + " with " 
-				+ bestHiddenNodes + " hidden nodes.");
 	}
 }

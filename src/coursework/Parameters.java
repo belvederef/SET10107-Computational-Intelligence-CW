@@ -19,7 +19,7 @@ public class Parameters {
 	public static CrossoverType crossoverType = CrossoverType.TWO_POINTS;
 	public static ReplaceType replaceType = ReplaceType.REP_TOURNAMENT;
 	
-	private static int numHidden = 10;	
+	private static int numHidden = 12;	
 	private static int numGenes = calculateNumGenes();
 	public static double minGene = -1; // specifies minimum and maximum weight values 
 	public static double maxGene = +1;
