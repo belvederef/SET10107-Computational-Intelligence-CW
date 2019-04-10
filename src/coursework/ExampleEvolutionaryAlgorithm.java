@@ -81,7 +81,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 
 
-			// Generate a child by crossover
+			// Generate children by crossover
 			ArrayList<Individual> children;
 			
 			switch(Parameters.crossoverType) {
@@ -210,21 +210,18 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	
 	private ArrayList<Individual> augmentedInitialise() {
 		population = new ArrayList<>();
-		for (int i = 0; i < Parameters.popSize + 1000; ++i) {
+		for (int i = 0; i < Parameters.popSize + 1000; i++) {
 			// chromosome weights are initialised randomly in the constructor
 			Individual individual = new Individual();
 			population.add(individual);
 		}
 		evaluateIndividuals(population);
 		
-		population = (ArrayList<Individual>) population
+		return (ArrayList<Individual>) population
 			.stream()
 			.sorted((c1, c2) -> c1.compareTo(c2))
 			.limit(Parameters.popSize)
 			.collect(Collectors.toCollection(ArrayList::new));
-		
-		
-		return population;
 	}
 	
 	private ArrayList<Individual> PosNegInitialise() {
@@ -247,14 +244,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 				population.add(individual2);
 			}
 		}
-		
-//		population = (ArrayList<Individual>) population
-//			.stream()
-//			.sorted((c1, c2) -> c1.compareTo(c2))
-//			.limit(Parameters.popSize)
-//			.collect(Collectors.toCollection(ArrayList::new));
-//		
-		
 		return population;
 	}
 	
@@ -295,7 +284,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		 * 1 - Pick t solutions completely at random from the population
 		 * 2 - Select the best of the t solutions to be a parent
 		 */
-		final int TOURNAMET_SIZE = (int) (Parameters.popSize * Parameters.tournamentSize);
+		final int TOURNAMET_SIZE = Parameters.tournamentSize;
 		
 		Collections.shuffle(population);
 		Individual parent = population
@@ -327,7 +316,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 
 	// Ranked Fitness proportionate
-	private Individual rankSelect() {
+	private Individual rankSelectOld() {
 		population.sort((c1, c2) -> c2.compareTo(c1));
 		
 		int rand = Parameters.random.nextInt(Parameters.popSize);
@@ -339,6 +328,94 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		}
 		return population.get(-1);
 	}
+	
+	private Individual rankSelect() {
+//		int rankSum = (Parameters.popSize + 1) * Parameters.popSize / 2;
+		double[] fitness = new double[Parameters.popSize];
+		for (int i = 0; i < Parameters.popSize; i++) {
+	        fitness[i] = i + 1;
+	    }
+
+	    unitize1(fitness);
+
+	    return population.get(random(fitness));
+	}
+	
+    // Helpers from smile (https://github.com/haifengl/smile)
+    public static double norm1(double[] x) {
+        double norm = 0.0;
+        
+        for (double n : x) {
+            norm += Math.abs(n);
+        }
+        
+        return norm;
+    }
+    public static void unitize1(double[] x) {
+        double n = norm1(x);
+        for (int i = 0; i < x.length; i++) {
+            x[i] /= n;
+        }
+    }
+    public static int random(double[] prob) {
+        int[] ans = random(prob, 1);
+        return ans[0];
+    }
+    public static int[] random(double[] prob, int n) {
+        // set up alias table
+        double[] q = new double[prob.length];
+        for (int i = 0; i < prob.length; i++) {
+            q[i] = prob[i] * prob.length;
+        }
+
+        // initialize a with indices
+        int[] a = new int[prob.length];
+        for (int i = 0; i < prob.length; i++) {
+            a[i] = i;
+        }
+
+        // set up H and L
+        int[] HL = new int[prob.length];
+        int head = 0;
+        int tail = prob.length - 1;
+        for (int i = 0; i < prob.length; i++) {
+            if (q[i] >= 1.0) {
+                HL[head++] = i;
+            } else {
+                HL[tail--] = i;
+            }
+        }
+
+        while (head != 0 && tail != prob.length - 1) {
+            int j = HL[tail + 1];
+            int k = HL[head - 1];
+            a[j] = k;
+            q[k] += q[j] - 1;
+            tail++;                                  // remove j from L
+            if (q[k] < 1.0) {
+                HL[tail--] = k;                      // add k to L
+                head--;                              // remove k
+            }
+        }
+
+        // generate sample
+        int[] ans = new int[n];
+        for (int i = 0; i < n; i++) {
+            double rU = Parameters.random.nextDouble() * prob.length;
+
+            int k = (int) (rU);
+            rU -= k;  /* rU becomes rU-[rU] */
+
+            if (rU < q[k]) {
+                ans[i] = k;
+            } else {
+                ans[i] = a[k];
+            }
+        }
+
+        return ans;
+    }
+
 	
 	
 	
@@ -560,7 +637,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 	// Replace using tournament - same as selection but with worst
 	private void tournamentReplace(ArrayList<Individual> individuals) {
-		final int TOURNAMET_SIZE = (int) (Parameters.popSize * Parameters.tournamentSize);
+		final int TOURNAMET_SIZE = Parameters.tournamentSize;
 		
 		for (Individual individual : individuals) {
 			Collections.shuffle(population);

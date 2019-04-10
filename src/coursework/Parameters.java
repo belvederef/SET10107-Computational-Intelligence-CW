@@ -24,14 +24,14 @@ public class Parameters {
 	public static double minGene = -1; // specifies minimum and maximum weight values 
 	public static double maxGene = +1;
 		
-	public static double tournamentSize = 0.2; // percentage over population (select and replace)
+	public static int tournamentSize = 20; // percentage over population (select and replace)
 	public static int popSize = 60; // default: 40
 	public static int maxEvaluations = 20000; // max 20000
 	
 	// Parameters for mutation 
 	// Rate = probability of changing a gene
 	// Change = the maximum +/- adjustment to the gene value
-	public static double mutateRate = 0.05; // good 0.05 - def 0.01. Mutation rate for mutation operator
+	public static double mutateRate = 0.45; // good 0.05 - def 0.01. Mutation rate for mutation operator
 	public static double mutateChange = 0.9; // good 1.00 - def 0.05. Delta change for mutation operator
 	
 	//Random number generator used throughout the application
@@ -42,31 +42,31 @@ public class Parameters {
 	public static Class neuralNetworkClass = ExampleEvolutionaryAlgorithm.class;
 	
 	
-	public static void setMutationRate(double mutationRate) {
-		mutateRate = mutationRate;
-	}
-	public static void setMutationChange(double mutationChange) {
-		mutateChange = mutationChange;
-	}
-	
-	public static int getPopSize() {
-		return popSize;
-	}
-	public static void setPopSize(int popSize) {
-		Parameters.popSize = popSize;
-	}
-	public static double getMutateRate() {
-		return mutateRate;
-	}
-	public static void setMutateRate(double mutateRate) {
-		Parameters.mutateRate = mutateRate;
-	}
-	public static double getMutateChange() {
-		return mutateChange;
-	}
-	public static void setMutateChange(double mutateChange) {
-		Parameters.mutateChange = mutateChange;
-	}
+//	public static void setMutationRate(double mutationRate) {
+//		mutateRate = mutationRate;
+//	}
+//	public static void setMutationChange(double mutationChange) {
+//		mutateChange = mutationChange;
+//	}
+//	
+//	public static int getPopSize() {
+//		return popSize;
+//	}
+//	public static void setPopSize(int popSize) {
+//		Parameters.popSize = popSize;
+//	}
+//	public static double getMutateRate() {
+//		return mutateRate;
+//	}
+//	public static void setMutateRate(double mutateRate) {
+//		Parameters.mutateRate = mutateRate;
+//	}
+//	public static double getMutateChange() {
+//		return mutateChange;
+//	}
+//	public static void setMutateChange(double mutateChange) {
+//		Parameters.mutateChange = mutateChange;
+//	}
 	/**
 	 * Do not change any methods that appear below here.
 	 * 

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import coursework.Parameters.SelectionType;
 import model.Fitness;
 import model.LunarParameters.DataSet;
 import model.NeuralNetwork;
@@ -55,7 +56,9 @@ public class StartNoGui {
 		try {
 //			findBestPopSize();
 //			findBestMutRate();
-			findBestHiddenNodes();
+//			findBestMutChange();
+//			findBestHiddenNodes();
+			findBestTournament();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -76,7 +79,7 @@ public class StartNoGui {
 			int runs = 10;
 			
 			for (int r=0; r < runs; r++) {
-				Parameters.setPopSize(i);
+				Parameters.popSize = i;
 				//Set the data set for training 
 				Parameters.setDataSet(DataSet.Training);
 				
@@ -118,7 +121,7 @@ public class StartNoGui {
 			int runs = 10;
 			
 			for (int r=0; r < runs; r++) {
-				Parameters.setMutateRate(i);
+				Parameters.mutateRate = i;
 				//Set the data set for training 
 				Parameters.setDataSet(DataSet.Training);
 				
@@ -152,12 +155,54 @@ public class StartNoGui {
 		}
 	}
 	
+	private static void findBestMutChange() throws IOException {		
+		for (double i=1.15; i < 1.75; i = i + 0.10) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 10;
+			
+			for (int r=0; r < runs; r++) {
+				Parameters.mutateChange = i;
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.mutateChange, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+		
+		}
+	}
+	
 	private static void findBestHiddenNodes() throws IOException {		
 		for(int i=10; i<15; i++) {
 			// For each pop size
 			double avgTrain = 0;
 			double avgTest = 0;
-			int runs = 20;
+			int runs = 10;
 			
 			for (int r=0; r < runs; r++) {
 				//Set the data set for training 
@@ -180,6 +225,47 @@ public class StartNoGui {
 			// once r runs have completed
 			String[] dataLines = new String[] { 
 					  ""+Parameters.getNumHidden(), 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
+		}
+	}
+	
+	private static void findBestTournament() throws IOException {		
+		for(SelectionType selectionType : Parameters.SelectionType.values()) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 20;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.selectionType = selectionType;
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.selectionType, 
 					  String.format("%.5f", avgTrain/runs), 
 					  String.format("%.5f", avgTest/runs) 
 				};
