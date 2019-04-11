@@ -14,8 +14,10 @@ public class SimulatedAnnealing extends NeuralNetwork{
 	@Override
 	public void run() {		
         // Set initial temp and cooling rate
-        double temp = 10000;
-        double coolingRate = 0.003;
+//        double temp = 100000;
+//        double coolingRate = 0.001;
+        double temp = 100000;
+        double coolingRate = 0.001;
         
 		// initialise a single individual
 		Individual currentIndividual = new Individual();
@@ -61,8 +63,8 @@ public class SimulatedAnnealing extends NeuralNetwork{
             System.out.println(gen + "\t" + best);
 		}
 		
-        System.out.println("Final solution fitness: " + best.fitness);
-        System.out.println("Final: " + best);
+//        System.out.println("Final solution fitness: " + best.fitness);
+//        System.out.println("Final: " + best);
 		
 //		outputStats();
 //		saveNeuralNetwork();
@@ -82,27 +84,35 @@ public class SimulatedAnnealing extends NeuralNetwork{
     
 	@Override
 	public double activationFunction(double x) {
-//		if (x < -20.0) {
-//			return -1.0;
-//		} else if (x > 20.0) {
-//			return 1.0;
-//		}
-//		return Math.tanh(x);
-//		
-		// ELU 
-		if (x > 0) return x;
-		return 0.1 * (Math.pow(Math.E, x) - 1);
-		
-		// SELU
-//		if (x > 0) return x * 1.0507009;
-//		return 1.0507009 * (1.673263 * Math.pow(Math.E, x)) - 1.673263;
-		
-		// Swish
-//		return x * (1 / (1 + Math.pow(Math.E, -x)));
-		
-		// HardELiSH - https://arxiv.org/pdf/1808.00783.pdf
-//		if (x < 0) return Math.max(0, Math.min(1, (x + 1) / 2)) * (Math.pow(Math.E, x) - 1);
-//		return x * Math.max(0, Math.min(1, (x + 1) / 2));
+		switch(Parameters.activationType) {
+		case ELU:
+		default:
+			if (x > 0) return x;
+			return 0.1 * (Math.pow(Math.E, x) - 1);
+		case HARD_ELISH:
+			if (x < 0) return Math.max(0, Math.min(1, (x + 1) / 2)) * (Math.pow(Math.E, x) - 1);
+			return x * Math.max(0, Math.min(1, (x + 1) / 2));
+		case LEAKY_R:
+			if (x > 0) return x;
+			return 0.01 * x;
+		case RELU:
+			if (x > 0) return x;
+			return -1;
+		case SELU:
+			if (x > 0) return x * 1.0507009;
+			return 1.0507009 * (1.673263 * Math.pow(Math.E, x)) - 1.673263;
+		case STEP:
+			if (x <= 0) return -1.00;
+			return 1.0;
+		case SWISH:
+			return x * (1 / (1 + Math.pow(Math.E, -x)));
+		case TANH:
+			if (x < -20.0) {
+				return -1.0;
+			} else if (x > 20.0) {
+				return 1.0;
+			}
+			return Math.tanh(x);
+		}
 	}
-	
 }

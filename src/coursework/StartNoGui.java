@@ -5,6 +5,13 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.jws.soap.SOAPBinding.ParameterStyle;
+
+import coursework.Parameters.ActivationType;
+import coursework.Parameters.CrossoverType;
+import coursework.Parameters.InitialisationType;
+import coursework.Parameters.MutationType;
+import coursework.Parameters.ReplaceType;
 import coursework.Parameters.SelectionType;
 import model.Fitness;
 import model.LunarParameters.DataSet;
@@ -58,7 +65,17 @@ public class StartNoGui {
 //			findBestMutRate();
 //			findBestMutChange();
 //			findBestHiddenNodes();
-			findBestTournament();
+//			findBestSelection();
+//			testTournamentSize();
+//			findBestCrossover();
+//			findBestInitialisation();
+//			findBestReplace();
+//			findMinMaxGenes();
+//			findBestActivationSA();
+//			findBestActivation();
+//			findImmigrationEfficacy();
+			
+			findBestMutation();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -238,7 +255,48 @@ public class StartNoGui {
 		}
 	}
 	
-	private static void findBestTournament() throws IOException {		
+	private static void findBestInitialisation() throws IOException {		
+		for(InitialisationType initialisationType : Parameters.InitialisationType.values()) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 20;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.initialisationType = initialisationType;
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.initialisationType, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
+		}
+	}
+	
+	private static void findBestSelection() throws IOException {		
 		for(SelectionType selectionType : Parameters.SelectionType.values()) {
 			// For each pop size
 			double avgTrain = 0;
@@ -266,6 +324,340 @@ public class StartNoGui {
 			// once r runs have completed
 			String[] dataLines = new String[] { 
 					  ""+Parameters.selectionType, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+		}
+	}
+	
+	private static void findBestCrossover() throws IOException {		
+		for(CrossoverType crossoverType : Parameters.CrossoverType.values()) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 20;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.crossoverType = crossoverType; 
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.crossoverType, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
+		}
+	}
+	
+	private static void findBestReplace() throws IOException {		
+		for(ReplaceType replaceType : Parameters.ReplaceType.values()) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 20;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.replaceType = replaceType; 
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.replaceType, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
+		}
+	}
+	
+	private static void testTournamentSize() throws IOException {
+		int[] sizesToTest = { 5, 10, 20, 30, 50, 70, 90 };
+		for(int i : sizesToTest) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 20;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.selectionType = Parameters.SelectionType.TOURNAMENT;
+				Parameters.tournamentSize = i;
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.tournamentSize, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+		}
+	}
+	
+	private static void findMinMaxGenes() throws IOException {		
+		for(int i=1; i<7; i++) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 20;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.minGene = -i;
+				Parameters.maxGene = i;
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.minGene, 
+					  ""+Parameters.maxGene, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
+		}
+	}
+	
+	private static void findBestActivation() throws IOException {		
+		for(ActivationType activationType : Parameters.ActivationType.values()) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 10;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.activationType = activationType; 
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.activationType, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
+		}
+	}
+	
+	private static void findBestActivationSA() throws IOException {		
+		for(ActivationType activationType : Parameters.ActivationType.values()) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 10;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.activationType = activationType; 
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new SimulatedAnnealing();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.activationType, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
+		}
+	}
+	
+	private static void findBestMutation() throws IOException {		
+		for(MutationType mutationType : Parameters.MutationType.values()) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 10;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				Parameters.mutationType = mutationType; 
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.mutationType, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close();
+
+		}
+	}
+	
+	private static void findImmigrationEfficacy() throws IOException {		
+		for(int i=0; i<2; i++) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 10;
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				if (i == 0) {
+					Parameters.immigration = false;
+				} else {
+					Parameters.immigration = true;
+				}
+				
+				//Create a new Neural Network Trainer Using the above parameters 
+				NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  ""+Parameters.immigration, 
 					  String.format("%.5f", avgTrain/runs), 
 					  String.format("%.5f", avgTest/runs) 
 				};

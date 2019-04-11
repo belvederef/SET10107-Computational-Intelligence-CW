@@ -11,28 +11,34 @@ public class Parameters {
 	public enum InitialisationType { RANDOM, AUGMENTED, POS_NEG } // augmented is best
 	public enum SelectionType { RANDOM, TOURNAMENT, ROULETTE, RANK, BEST }
 	public enum CrossoverType { UNIFORM, ONE_POINT, TWO_POINTS, ARITHM }
-	public enum ReplaceType { REP_WORST, REP_TOURNAMENT }
+	public enum MutationType { STANDARD, CONSTRAINED, ANNEALING }
+	public enum ReplaceType { WORST, TOURNAMENT }
+	public enum ActivationType { TANH, STEP, RELU, LEAKY_R, ELU, SELU, 
+		SWISH, HARD_ELISH }
 	
 	// The ones chosen
-	public static InitialisationType initialisationType = InitialisationType.RANDOM;  
+	public static InitialisationType initialisationType = InitialisationType.POS_NEG;  
 	public static SelectionType selectionType = SelectionType.TOURNAMENT;
 	public static CrossoverType crossoverType = CrossoverType.TWO_POINTS;
-	public static ReplaceType replaceType = ReplaceType.REP_TOURNAMENT;
+	public static MutationType mutationType = MutationType.STANDARD;
+	public static ReplaceType replaceType = ReplaceType.TOURNAMENT;
+	public static ActivationType activationType = ActivationType.ELU;
 	
-	private static int numHidden = 12;	
+	private static int numHidden = 10;	// final 12
 	private static int numGenes = calculateNumGenes();
 	public static double minGene = -1; // specifies minimum and maximum weight values 
 	public static double maxGene = +1;
 		
-	public static int tournamentSize = 20; // percentage over population (select and replace)
+	public static int tournamentSize = 20; // final - 10 percentage over population (select and replace)
 	public static int popSize = 60; // default: 40
 	public static int maxEvaluations = 20000; // max 20000
+	public static boolean immigration = true;
 	
 	// Parameters for mutation 
 	// Rate = probability of changing a gene
 	// Change = the maximum +/- adjustment to the gene value
-	public static double mutateRate = 0.45; // good 0.05 - def 0.01. Mutation rate for mutation operator
-	public static double mutateChange = 0.9; // good 1.00 - def 0.05. Delta change for mutation operator
+	public static double mutateRate = 0.45; // final 0.45 good 0.45 - def 0.01. Mutation rate for mutation operator
+	public static double mutateChange = 0.95; // final 0.95 good 1.00 - def 0.05. Delta change for mutation operator
 	
 	//Random number generator used throughout the application
 	public static long seed = System.currentTimeMillis();

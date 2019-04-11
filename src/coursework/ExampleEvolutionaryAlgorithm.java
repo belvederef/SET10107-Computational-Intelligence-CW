@@ -37,9 +37,9 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		System.out.println("Best From Initialisation " + best);
 		
         // Set initial temp, cooling rate, and improvement count
-        double temp = 10000;
-        double coolingRate = 0.003;
-        int custEvolutionCount = 100;
+        double temp = 100000;
+        double coolingRate = 0.001;
+//        int custEvolutionCount = 100;
 
 		// main EA processing loop
 		while (evaluations < Parameters.maxEvaluations) {
@@ -63,14 +63,13 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 					parent2 = rankSelect();
 					break;
 				case BEST:
+					population.sort((c1, c2) -> c1.compareTo(c2));
 					parent1 = population
 						.stream()
-						.sorted((c1, c2) -> c1.compareTo(c2))
 						.findFirst()
 						.orElse(null);
 					parent2 = population
 						.stream()
-						.sorted((c1, c2) -> c1.compareTo(c2))
 						.skip(1)
 						.findFirst()
 						.orElse(null);
@@ -83,7 +82,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 			// Generate children by crossover
 			ArrayList<Individual> children;
-			
 			switch(Parameters.crossoverType) {
 				case ARITHM:
 					children = arithmeticCrossover(parent1, parent2);
@@ -100,71 +98,51 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 					break;
 			}
 						
+//			evaluateIndividuals(children);
+			
 			//mutate the offspring
-			mutate(children);
-			
-			evaluateIndividuals(children);
-			// Mutate with annealing function
-//				children.set(0, mutateAnnealation(children.get(0), temp));
-//				children.set(1, mutateAnnealation(children.get(1), temp));
-//				temp *= 1 - coolingRate;
-			
-			
-			
-			// Re-initialise
-			custEvolutionCount += 7;
-			if (custEvolutionCount >= 1000 && getBest().fitness > 0.15) {
-				population = initialise();
-				custEvolutionCount = 0;
-			} 
-
-			// Escape local optima
-//				if (custEvolutionCount >= 4500 && getBest().fitness < 0.15) {
-////				if (noImprovement >= 500) {
-//					mutateFromBestN(10, 0.05, 1);
-//					keepBestN(70);
-//					custEvolutionCount = 0;
-////					mutate(population);
-////					evaluateIndividuals(population);
-////					
-////					mutateApartFirstN(10, 0.5);
-////					mutateFromBestN(10, 0.05, 1.2);
-//				}
+			switch(Parameters.mutationType) {
+			case ANNEALING:
+				mutateAnnealing(children, temp);
+				temp *= 1 - coolingRate;
+				break;
+			case CONSTRAINED:
+				constrainedMutation(children);
+				break;
+			case STANDARD:
+			default:
+				mutate(children);
+				break;
+			}
 			
 			// Evaluate the children
-			evaluateIndividuals(children);			
+			evaluateIndividuals(children);
+				
+			// Re-initialise
+//			custEvolutionCount += 7;
+//			if (custEvolutionCount >= 1000 && getBest().fitness > 0.15) {
+//				population = initialise();
+//				custEvolutionCount = 0;
+//			} 
 
 			// Replace children in population
 			switch(Parameters.replaceType) {
-				case REP_TOURNAMENT:
+				case TOURNAMENT:
 				default:
 					tournamentReplace(children);
 					break;
-				case REP_WORST:
+				case WORST:
 					replaceWorst(children);
 					break;
 			}
-
-//				regeneratePopulation();
-
-			// check to see if the best has improved
-//				if (getBest().fitness == best.fitness) {
-//					Parameters.setMutationRate(Parameters.mutateRate + 0.1);
-//					Parameters.setMutationChange(Parameters.random.nextDouble() * 2.0);
-//				} else {
-//					Parameters.setMutationRate(0.05);
-//					Parameters.setMutationChange(1);
-//				}
 			
-			injectIndividual();  // Inject a new individual
+			if (Parameters.immigration) immigration();  // Inject a new individual
 			
 			best = getBest();
-			
-			
 			outputStats();
 		}
 
-		saveNeuralNetwork();  // save the trained network to disk
+//		saveNeuralNetwork();  // save the trained network to disk
 	}
 
 	
@@ -317,10 +295,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 	// Ranked Fitness proportionate
 	private Individual rankSelectOld() {
-		population.sort((c1, c2) -> c2.compareTo(c1));
+		population.sort((c1, c2) -> c1.compareTo(c2));
 		
 		int rand = Parameters.random.nextInt(Parameters.popSize);
-		for (int i = 0; i < Parameters.popSize; i++) {
+		for (int i = 1; i < Parameters.popSize; i++) {
 			rand--;
 			if (rand < i) {
 				return population.get(i);
@@ -519,65 +497,31 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 		}		
 	}
-	private void mutateApartFirstN(int n, double mutationRate) {	
-		population.sort((c1, c2) -> c2.compareTo(c1));
-		for(int i=0; i < Parameters.popSize - n; i++) {
-			Individual individual = population.get(i);
-			for (int j = 0; j < individual.chromosome.length; j++) {
-				if (Parameters.random.nextDouble() < mutationRate) {
+	private void constrainedMutation(ArrayList<Individual> individuals) {		
+		for(Individual individual : individuals) {
+			for (int i = 0; i < individual.chromosome.length; i++) {
+				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
 					if (Parameters.random.nextBoolean()) {
-						individual.chromosome[j] += (Parameters.mutateChange);
+						double oldFitness = individual.fitness;
+						individual.chromosome[i] += (Parameters.mutateChange);
+						individual.fitness = Fitness.evaluate(individual, this);
+						if (individual.fitness > oldFitness) {
+							// revert if bad choice was made
+							individual.chromosome[i] -= (Parameters.mutateChange);
+						}
 					} else {
-						individual.chromosome[j] -= (Parameters.mutateChange);
+						double oldFitness = individual.fitness;
+						individual.chromosome[i] -= (Parameters.mutateChange);
+						individual.fitness = Fitness.evaluate(individual, this);
+						if (individual.fitness > oldFitness) {
+							// revert if bad choice was made
+							individual.chromosome[i] += (Parameters.mutateChange);
+						}
 					}
 				}
 			}
 		}		
-		evaluateIndividuals(population);
 	}
-	private void mutateFromBestN(int n, double mutationRate, double mutationChange) {	
-		double before = 0;
-		double after = 0;
-		for (Individual individual : population) {
-			individual.fitness = Fitness.evaluate(individual, this);
-			before += individual.fitness;
-		}
-		before = before / population.size();
-		
-		
-		ArrayList<Individual> bests = new ArrayList<Individual>();
-		
-		population.sort((c1, c2) -> c1.compareTo(c2));
-		for (int i=0; i<n; i++) {	
-			bests.add(population.get(i).copy());
-		}
-		
-		population.sort((c1, c2) -> c2.compareTo(c1));
-		
-		
-		for(int i=0; i < n; i++) {
-			Individual individual = bests.get(i);
-			for (int j = 0; j < individual.chromosome.length; j++) {
-				if (Parameters.random.nextDouble() < mutationRate) {
-					if (Parameters.random.nextBoolean()) {
-						individual.chromosome[j] += (mutationChange);
-					} else {
-						individual.chromosome[j] -= (mutationChange);
-					}
-				}
-			}
-			population.set(i, individual);
-		}		
-//		evaluateIndividuals(population);
-		
-		for (Individual individual : population) {
-			individual.fitness = Fitness.evaluate(individual, this);
-			after += individual.fitness;
-		}
-		after = after / population.size();
-		System.out.println("before: " + before + " after: " + after);
-	}
-	
 	
     public static double acceptanceProbability(double energy, double newEnergy, double temperature) {
         // If the new solution is better, accept it
@@ -587,39 +531,35 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
         // If the new solution is worse, calculate an acceptance probability
         return Math.exp((energy - newEnergy) / temperature);
     }
-	private Individual mutateAnnealation(Individual individual, double temp) {
-		Individual newIndividual = individual.copy();
-		
-		// Get a random genes in the chromosome (change with next int)
-        int chromeGenePos1 = (int) (newIndividual.chromosome.length * Parameters.random.nextDouble());
-        int chromeGenePos2 = (int) (newIndividual.chromosome.length * Parameters.random.nextDouble());
+	private void mutateAnnealing(ArrayList<Individual> individuals, double temp) {
+		for (Individual individual : individuals) {
+			Individual newIndividual = individual.copy();
+			
+			// Get a random genes in the chromosome (change with next int)
+	        int chromeGenePos1 = (int) (newIndividual.chromosome.length * Parameters.random.nextDouble());
+	        int chromeGenePos2 = (int) (newIndividual.chromosome.length * Parameters.random.nextDouble());
 
-        // Get the values at selected positions in the chromosome
-        double geneSwap1 = newIndividual.chromosome[chromeGenePos1];
-        double geneSwap2 = newIndividual.chromosome[chromeGenePos2];
+	        // Get the values at selected positions in the chromosome
+	        double geneSwap1 = newIndividual.chromosome[chromeGenePos1];
+	        double geneSwap2 = newIndividual.chromosome[chromeGenePos2];
 
-        // Swap them
-        newIndividual.chromosome[chromeGenePos1] = geneSwap2;
-        newIndividual.chromosome[chromeGenePos2] = geneSwap1;
-        
-        // Evaluate fitness
-        newIndividual.fitness = Fitness.evaluate(newIndividual, this);
-        
-        // Get energy of solutions
-        double currentEnergy = individual.fitness;
-        double neighbourEnergy = newIndividual.fitness;
-		
-		// Decide if we should accept the neighbour
-        if (acceptanceProbability(currentEnergy, neighbourEnergy, temp) 
-        		> Parameters.random.nextDouble()) {
-        	individual = newIndividual;
-        }
-
-        return individual;
-        // Keep track of the best solution found
-//        if (currentIndividual.fitness < best.fitness) {
-//            best = currentIndividual.copy();
-//        }
+	        // Swap them
+	        newIndividual.chromosome[chromeGenePos1] = geneSwap2;
+	        newIndividual.chromosome[chromeGenePos2] = geneSwap1;
+	        
+	        // Evaluate fitness
+	        newIndividual.fitness = Fitness.evaluate(newIndividual, this);
+	        
+	        // Get energy of solutions
+	        double currentEnergy = individual.fitness;
+	        double neighbourEnergy = newIndividual.fitness;
+			
+			// Decide if we should accept the neighbour
+	        if (acceptanceProbability(currentEnergy, neighbourEnergy, temp) 
+	        		>= Parameters.random.nextDouble()) {
+	        	individual = newIndividual;
+	        }
+		}
 	}
 	
 	
@@ -683,54 +623,50 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 	
 
-    private void injectIndividual() {
+    private void immigration() {
+    	ArrayList<Individual> immigrants = new ArrayList<Individual>();
         Individual newIndividual = new Individual();
         newIndividual.fitness = Fitness.evaluate(newIndividual, this);
-        population.sort((c1, c2) -> c2.compareTo(c1));
-        population.set(2, newIndividual);
+        
+        immigrants.add(newIndividual);
+//        population.sort((c1, c2) -> c2.compareTo(c1));
+//        population.set(2, newIndividual);
+        
+        replaceWorst(immigrants);
     }
 
 	
 	@Override
 	public double activationFunction(double x) {
-		// Sigmoid
-//		return 1 / (1 + Math.pow(Math.E, -x));
-		
-		// Tanh
-//		if (x < -20.0) {
-//			return -1.0;
-//		} else if (x > 20.0) {
-//			return 1.0;
-//		}
-//		return Math.tanh(x);
-		
-		// Heaviside or step function
-//		if (x <= 0) return -1.00;
-//		return 1.0;
-		
-		// ReLU
-//		if (x > 0) return x;
-//		return -1;
-		
-		// Leaky ReLU
-//		if (x > 0) return x;
-//		return 0.01 * x;
-		
-		// ELU - Top 2 most effective
-		if (x > 0) return x;
-		return 0.1 * (Math.pow(Math.E, x) - 1);
-//		return 1.673263 * (Math.pow(Math.E, x) - 1);
-
-	 	
-		// SELU - top 2 most effective
-//		if (x > 0) return x * 1.0507009;
-//		return 1.0507009 * (1.673263 * Math.pow(Math.E, x)) - 1.673263;
-		
-		// Swish
-//		return x * (1 / (1 + Math.pow(Math.E, -x)));
-		
-		// HardELiSH - https://arxiv.org/pdf/1808.00783.pdf
-//		if (x < 0) return Math.max(0, Math.min(1, (x + 1) / 2)) * (Math.pow(Math.E, x) - 1);
-//		return x * Math.max(0, Math.min(1, (x + 1) / 2));
+		switch(Parameters.activationType) {
+		case ELU:
+		default:
+			if (x > 0) return x;
+			return 0.1 * (Math.pow(Math.E, x) - 1);
+		case HARD_ELISH:
+			if (x < 0) return Math.max(0, Math.min(1, (x + 1) / 2)) * (Math.pow(Math.E, x) - 1);
+			return x * Math.max(0, Math.min(1, (x + 1) / 2));
+		case LEAKY_R:
+			if (x > 0) return x;
+			return 0.01 * x;
+		case RELU:
+			if (x > 0) return x;
+			return -1;
+		case SELU:
+			if (x > 0) return x * 1.0507009;
+			return 1.0507009 * (1.673263 * Math.pow(Math.E, x)) - 1.673263;
+		case STEP:
+			if (x <= 0) return -1.00;
+			return 1.0;
+		case SWISH:
+			return x * (1 / (1 + Math.pow(Math.E, -x)));
+		case TANH:
+			if (x < -20.0) {
+				return -1.0;
+			} else if (x > 20.0) {
+				return 1.0;
+			}
+			return Math.tanh(x);
+		}
 	}
 }
