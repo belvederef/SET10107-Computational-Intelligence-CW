@@ -29,16 +29,18 @@ public class Parameters {
 	public static double minGene = -1; // specifies minimum and maximum weight values 
 	public static double maxGene = +1;
 		
-	public static int tournamentSize = 20; // final - 10 percentage over population (select and replace)
+	public static int tournamentSize = 20; // final - 10. (select and replace)
 	public static int popSize = 60; // default: 40
 	public static int maxEvaluations = 20000; // max 20000
-	public static boolean immigration = true;
+	public static boolean immigration = true; // final - false
 	
 	// Parameters for mutation 
 	// Rate = probability of changing a gene
 	// Change = the maximum +/- adjustment to the gene value
 	public static double mutateRate = 0.45; // final 0.45 good 0.45 - def 0.01. Mutation rate for mutation operator
 	public static double mutateChange = 0.95; // final 0.95 good 1.00 - def 0.05. Delta change for mutation operator
+	
+	public static double SAcoolingRate = 0.001;
 	
 	//Random number generator used throughout the application
 	public static long seed = System.currentTimeMillis();
@@ -47,32 +49,7 @@ public class Parameters {
 	//set the NeuralNetwork class here to use your code from the GUI
 	public static Class neuralNetworkClass = ExampleEvolutionaryAlgorithm.class;
 	
-	
-//	public static void setMutationRate(double mutationRate) {
-//		mutateRate = mutationRate;
-//	}
-//	public static void setMutationChange(double mutationChange) {
-//		mutateChange = mutationChange;
-//	}
-//	
-//	public static int getPopSize() {
-//		return popSize;
-//	}
-//	public static void setPopSize(int popSize) {
-//		Parameters.popSize = popSize;
-//	}
-//	public static double getMutateRate() {
-//		return mutateRate;
-//	}
-//	public static void setMutateRate(double mutateRate) {
-//		Parameters.mutateRate = mutateRate;
-//	}
-//	public static double getMutateChange() {
-//		return mutateChange;
-//	}
-//	public static void setMutateChange(double mutateChange) {
-//		Parameters.mutateChange = mutateChange;
-//	}
+
 	/**
 	 * Do not change any methods that appear below here.
 	 * 

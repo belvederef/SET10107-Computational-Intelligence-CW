@@ -17,7 +17,7 @@ public class SimulatedAnnealing extends NeuralNetwork{
 //        double temp = 100000;
 //        double coolingRate = 0.001;
         double temp = 100000;
-        double coolingRate = 0.001;
+        double coolingRate = Parameters.SAcoolingRate;
         
 		// initialise a single individual
 		Individual currentIndividual = new Individual();
@@ -66,7 +66,7 @@ public class SimulatedAnnealing extends NeuralNetwork{
 //        System.out.println("Final solution fitness: " + best.fitness);
 //        System.out.println("Final: " + best);
 		
-//		outputStats();
+		outputStats();
 //		saveNeuralNetwork();
 	}
 

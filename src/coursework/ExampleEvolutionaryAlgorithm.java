@@ -37,8 +37,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		System.out.println("Best From Initialisation " + best);
 		
         // Set initial temp, cooling rate, and improvement count
-        double temp = 100000;
-        double coolingRate = 0.001;
+        double temp = 10000;
+        double coolingRate = 0.003;
 //        int custEvolutionCount = 100;
 
 		// main EA processing loop
