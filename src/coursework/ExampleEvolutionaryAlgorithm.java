@@ -629,9 +629,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
         newIndividual.fitness = Fitness.evaluate(newIndividual, this);
         
         immigrants.add(newIndividual);
-//        population.sort((c1, c2) -> c2.compareTo(c1));
-//        population.set(2, newIndividual);
-        
         replaceWorst(immigrants);
     }
 

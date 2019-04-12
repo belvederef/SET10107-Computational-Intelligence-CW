@@ -22,17 +22,17 @@ public class Parameters {
 	public static CrossoverType crossoverType = CrossoverType.TWO_POINTS;
 	public static MutationType mutationType = MutationType.STANDARD;
 	public static ReplaceType replaceType = ReplaceType.TOURNAMENT;
-	public static ActivationType activationType = ActivationType.ELU;
+	public static ActivationType activationType = ActivationType.SELU;
 	
-	private static int numHidden = 10;	// final 12
+	private static int numHidden = 13;	// final 12
 	private static int numGenes = calculateNumGenes();
 	public static double minGene = -1; // specifies minimum and maximum weight values 
 	public static double maxGene = +1;
 		
-	public static int tournamentSize = 20; // final - 10. (select and replace)
-	public static int popSize = 60; // default: 40
+	public static int tournamentSize = 10; // final - 10. (select and replace)
+	public static int popSize = 50; // default: 40
 	public static int maxEvaluations = 20000; // max 20000
-	public static boolean immigration = true; // final - false
+	public static boolean immigration = false; // final - false
 	
 	// Parameters for mutation 
 	// Rate = probability of changing a gene
@@ -40,7 +40,7 @@ public class Parameters {
 	public static double mutateRate = 0.45; // final 0.45 good 0.45 - def 0.01. Mutation rate for mutation operator
 	public static double mutateChange = 0.95; // final 0.95 good 1.00 - def 0.05. Delta change for mutation operator
 	
-	public static double SAcoolingRate = 0.001;
+	public static double SAcoolingRate = 0.0011;
 	
 	//Random number generator used throughout the application
 	public static long seed = System.currentTimeMillis();

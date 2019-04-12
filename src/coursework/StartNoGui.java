@@ -74,9 +74,10 @@ public class StartNoGui {
 //			findImmigrationEfficacy();
 //			findBestMutation();
 			
-			findMinMaxGenes();
-			findBestSACoolRate();
+//			findMinMaxGenes();
+//			findBestSACoolRate();
 //			findBestActivationSA();
+			testAlgorithms();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -547,7 +548,6 @@ public class StartNoGui {
 	}
 	
 	private static void findBestSACoolRate() throws IOException {		
-		double bestValue = 100;
 		for(double i=0.0007; i<0.0013; i = i + 0.0001) {
 			// For each pop size
 			double avgTrain = 0;
@@ -583,19 +583,16 @@ public class StartNoGui {
 			
 			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
 			csvOutputFile.write(line + "\n");//appends the string to the file
-			csvOutputFile.close();
-			if ((avgTest/runs) > bestValue) bestValue = (avgTest/runs); 
+			csvOutputFile.close(); 
 		}
-		findBestActivationSA(bestValue);
 	}
 	
-	private static void findBestActivationSA(double bestCoolRate) throws IOException {
-		Parameters.SAcoolingRate = bestCoolRate;
+	private static void findBestActivationSA() throws IOException {
 		for(ActivationType activationType : Parameters.ActivationType.values()) {
 			// For each pop size
 			double avgTrain = 0;
 			double avgTest = 0;
-			int runs = 10;
+			int runs = 5;
 			
 			for (int r=0; r < runs; r++) {
 				//Set the data set for training 
@@ -714,6 +711,53 @@ public class StartNoGui {
 			csvOutputFile.write(line + "\n");//appends the string to the file
 			csvOutputFile.close();
 
+		}
+	}
+	
+	private static void testAlgorithms() throws IOException {		
+		for(int i=0; i<2; i++) {
+			// For each pop size
+			double avgTrain = 0;
+			double avgTest = 0;
+			int runs = 5;
+			String network = "";
+			
+			for (int r=0; r < runs; r++) {
+				//Set the data set for training 
+				Parameters.setDataSet(DataSet.Training);
+				
+				//Create a new Neural Network Trainer Using the above parameters
+				NeuralNetwork nn;
+				if (i == 0) {
+					nn = new ExampleEvolutionaryAlgorithm();
+					network = "SSGA";
+				} else {
+					nn = new SimulatedAnnealing();
+					network = "SA";
+				}	
+				nn.run();
+				
+				// train
+				double trainFitness = Fitness.evaluate(nn);
+				// test
+				Parameters.setDataSet(DataSet.Test);
+				double testFitness = Fitness.evaluate(nn);
+				
+				avgTrain += trainFitness;
+				avgTest += testFitness;
+			}
+			// once r runs have completed
+			String[] dataLines = new String[] { 
+					  network, 
+					  String.format("%.5f", avgTrain/runs), 
+					  String.format("%.5f", avgTest/runs) 
+				};
+		
+			String line = convertToCSV(dataLines);
+			
+			FileWriter csvOutputFile = new FileWriter("results/results.csv", true);
+			csvOutputFile.write(line + "\n");//appends the string to the file
+			csvOutputFile.close(); 
 		}
 	}
 }
